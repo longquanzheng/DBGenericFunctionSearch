@@ -42,6 +42,10 @@ public class Expression {
         this.variables = new HashMap<String, Double>(4);
         this.userFunctionNames = userFunctionNames;
     }
+    
+    public Token[] getTokens(){
+    	return tokens;
+    }
 
     public Expression setVariable(final String name, final double value) {
         this.checkVariableName(name);

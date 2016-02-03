@@ -34,6 +34,15 @@ public class Range {
 		return datas.length;
 	}
 	
+	public String toString(){
+		StringBuilder sb = new StringBuilder(datas.length+":");
+		for(int i=0;i<datas.length; i++){
+			sb.append(i+":["+datas[i][LEFT]+","+datas[i][RIGHT]+"],");
+		}
+		sb.append("\n");
+		return sb.toString();
+	}
+	
 	public boolean hasChangedSign(){
 		byte s = 0;
 		for(int i=0; i<datas.length; i++){

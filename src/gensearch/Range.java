@@ -91,4 +91,12 @@ public class Range {
 		
 	}
 
+	public double getLeft() {
+		return datas[0][LEFT];
+	}
+	
+	public double getRight() {
+		return datas[0][RIGHT];
+	}
+
 }

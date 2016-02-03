@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
 import net.objecthunter.exp4j.tokenizer.NumberToken;
 import net.objecthunter.exp4j.tokenizer.OperatorToken;
 import net.objecthunter.exp4j.tokenizer.Token;
@@ -79,12 +80,16 @@ public class RangeExpression {
     }
 
 	public static void main(String[] args) {
-		//exp = new expbuilder("x1*x2").setVars(x1,x2)
+		//exp = new expbuilder("x1*x2").vars(x1,x2)
 		//rangeExpW = new RangeExpW(exp)
 		//Range r = rangeExpW.setVarRange(x1, new Range(1,2) ).setVarRange(x1, new Range( 2, 3 ) ). eval()
 		//bool res = r.hasChangedSigned()
 		
-		
+		Expression exp = new ExpressionBuilder("x1/x2").variables("x1","x2").build();
+		RangeExpression rexp = new RangeExpression(exp);
+		rexp.setVariable("x1", new Range(1,2,-5,6,-1,-3))
+			.setVariable("x2", new Range(-3,6,1,2));
+		System.out.println(rexp.evaluate());
 	}
 
 }

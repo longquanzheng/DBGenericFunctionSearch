@@ -26,6 +26,15 @@ public class Range {
 		datas[0][RIGHT] = max;
 	}
 	
+	public Range(double ... ds){
+		int num = ds.length/2;
+		datas = new double[num][2];
+		for(int i=0; i<num; i++){
+			datas[i][LEFT] = ds[i*2];
+			datas[i][RIGHT] = ds[i*2+1];
+		}
+	}
+	
 	public Range(double[][] ranges){
 		this.datas = ranges;
 	}
@@ -53,13 +62,13 @@ public class Range {
 					}else{
 						byte nextS = getSign(datas[i][j]);
 						if(nextS!=s){
-							return false;
+							return true;
 						}
 					}
 				}
 			}
 		}
-		return true;
+		return false;
 	}
 	
 	private byte getSign(double d){

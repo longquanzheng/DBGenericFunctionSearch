@@ -134,7 +134,8 @@ public class RangeOperation {
             }
         };
         
-        double[][] ranges1 = { {1,2},{-3,4}, {-8,-1} };
+        //double[][] ranges1 = { {1,2},{-3,4}, {-8,-1} };
+        double[][] ranges1 = { {-1,-2},{-3,-4}, {-8,-1} };
         double[][] ranges2 = { {10,20},{-2,9}, {-15,-8} };
         
         Range r1 = new Range(ranges1);
@@ -144,6 +145,8 @@ public class RangeOperation {
         System.out.println( rop.applyRangeOperation(r1,r2));
         
         System.out.println( rop.applyRangeOperation(r1));
+        
+        System.out.println(r1.hasChangedSign());
 	}
 
 }

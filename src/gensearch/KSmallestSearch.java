@@ -82,7 +82,7 @@ public class KSmallestSearch {
 		Stack<LinkedList<RTreeNode>> prunedNodes = new Stack<LinkedList<RTreeNode>>();
 		RTreeNode minNode = searchSmallest(udf, dudfs, activeNodes, prunedNodes);
 		
-		//3. searching the remain k-1 ones
+		//3. searching the remain k-1 ones 
 		//using the last activeNodes and prunedNodes
 		
 		//4. output

@@ -43,9 +43,9 @@ public class KSmallestSearch {
 	public static void main(String[] args) {
 		
 		//1. Input data
-		int numDimensions = 3;
+		int numDimensions = 10;
 		int numLevels = 3;
-		int numSeps = 4;
+		int numSeps = 2;
 		//int k=1; TODO
 		
 		/*
@@ -64,12 +64,36 @@ public class KSmallestSearch {
 		dudfs[2] = new ExpressionBuilder("5").variables("x1","x2").build();
 		*/
 		
+		/*
 		Expression udf = new ExpressionBuilder("x1^2+x2^2+x3^2").variables("x1","x2","x3").build();
 		Expression[] dudfs = new Expression[3]; 
 		dudfs[0]= new ExpressionBuilder("2*x1").variables("x1","x2","x3").build();
 		dudfs[1] = new ExpressionBuilder("2*x2").variables("x1","x2","x3").build();
 		dudfs[2] = new ExpressionBuilder("2*x3").variables("x1","x2", "x3").build();
-		
+		*/
+		Expression udf = new ExpressionBuilder("x1*x2*x3*x4*x5*x6*x7*x8*x9*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		Expression[] dudfs = new Expression[numDimensions]; 
+		dudfs[0]= new ExpressionBuilder("x2*x3*x4*x5*x6*x7*x8*x9*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		dudfs[1]= new ExpressionBuilder("x1*x3*x4*x5*x6*x7*x8*x9*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		dudfs[2]= new ExpressionBuilder("x1*x2*x4*x5*x6*x7*x8*x9*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		dudfs[3]= new ExpressionBuilder("x1*x2*x3*x5*x6*x7*x8*x9*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		dudfs[4]= new ExpressionBuilder("x1*x2*x3*x4*x6*x7*x8*x9*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		dudfs[5]= new ExpressionBuilder("x1*x2*x3*x4*x5*x7*x8*x9*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		dudfs[6]= new ExpressionBuilder("x1*x2*x3*x4*x5*x6*x8*x9*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		dudfs[7]= new ExpressionBuilder("x1*x2*x3*x4*x5*x6*x7*x9*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		dudfs[8]= new ExpressionBuilder("x1*x2*x3*x4*x5*x6*x7*x8*x10")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
+		dudfs[9]= new ExpressionBuilder("x1*x2*x3*x4*x5*x6*x7*x8*x9")
+				.variables("x1","x2","x3","x4","x5","x6","x7","x8","x9","x10").build();
 		
 		PerfectRTree prt = new PerfectRTree(numDimensions,numSeps,numLevels);
 		prt.setDomain(1, 0, 100);

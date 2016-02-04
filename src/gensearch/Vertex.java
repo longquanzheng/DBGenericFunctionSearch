@@ -5,6 +5,11 @@ import java.util.Collections;
 
 import net.objecthunter.exp4j.Expression;
 
+/**
+ * vertex of MBR
+ * @author qlong
+ *
+ */
 public class Vertex implements Comparable<Vertex> {
 
 	public String index;

@@ -4,6 +4,10 @@ import java.util.ArrayList;
 
 public class RTreeNode {
 
+	private static long idcnt = 0;
+	
+	public final long id;
+	
 	//if it's NOT  leaf node
 	public ArrayList<RTreeNode> subNodes;
 	public double[] MBR_S,MBR_T;
@@ -12,9 +16,11 @@ public class RTreeNode {
 	public double[] val; 
 
 	public RTreeNode(){	
+		id = idcnt ++;
 	}
 	
 	public RTreeNode(double[] val){
+		id = idcnt ++;
 		this.val=val.clone();
 	}
 	

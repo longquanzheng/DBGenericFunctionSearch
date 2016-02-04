@@ -85,10 +85,11 @@ public class RangeExpression {
 		//Range r = rangeExpW.setVarRange(x1, new Range(1,2) ).setVarRange(x1, new Range( 2, 3 ) ). eval()
 		//bool res = r.hasChangedSigned()
 		
-		Expression exp = new ExpressionBuilder("x1/x2").variables("x1","x2").build();
+		Expression exp = new ExpressionBuilder("x1/x2").variables("x1","x2","x3").build();
 		RangeExpression rexp = new RangeExpression(exp);
 		rexp.setVariable("x1", new Range(1,2,-5,6,-1,-3))
-			.setVariable("x2", new Range(-3,6,1,2));
+			.setVariable("x2", new Range(-3,6,1,2))
+			.setVariable("x3", new Range(-3,6,1,2));
 		System.out.println(rexp.evaluate());
 	}
 

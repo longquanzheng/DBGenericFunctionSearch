@@ -12,9 +12,10 @@ public class KSmallestSearch {
 	
 	//counting visiting times of nodes
 	private static long visit_cnt = 0;
+	
 	//store cache of nodes, for 0:MinDist,1:MinMaxDist values(non-leaf node), and the 0,1:value of exp (leaf node)
 	private static HashMap<Long,double[]> nodeCache = new HashMap<Long,double[]>();
-	
+	private static long cache_hits = 0;
 	/**
 	 *input: 
 		 numDimensions:num of dimensions, also num of vars in udf
@@ -45,13 +46,30 @@ public class KSmallestSearch {
 		int numDimensions = 3;
 		int numLevels = 3;
 		int numSeps = 4;
-		int k=1;
+		//int k=1; TODO
 		
+		/*
 		Expression udf = new ExpressionBuilder("x1*x2*x3").variables("x1","x2","x3").build();
 		Expression[] dudfs = new Expression[3]; 
 		dudfs[0]= new ExpressionBuilder("x2*x3").variables("x2","x3").build();
 		dudfs[1] = new ExpressionBuilder("x1*x3").variables("x1","x3").build();
 		dudfs[2] = new ExpressionBuilder("x1*x2").variables("x1","x2").build();
+		*/
+		
+		/*
+		Expression udf = new ExpressionBuilder("3*x1+4*x2*5*x3").variables("x1","x2","x3").build();
+		Expression[] dudfs = new Expression[3]; 
+		dudfs[0]= new ExpressionBuilder("3").variables("x2","x3").build();
+		dudfs[1] = new ExpressionBuilder("4").variables("x1","x3").build();
+		dudfs[2] = new ExpressionBuilder("5").variables("x1","x2").build();
+		*/
+		
+		Expression udf = new ExpressionBuilder("x1^2+x2^2+x3^2").variables("x1","x2","x3").build();
+		Expression[] dudfs = new Expression[3]; 
+		dudfs[0]= new ExpressionBuilder("2*x1").variables("x1","x2","x3").build();
+		dudfs[1] = new ExpressionBuilder("2*x2").variables("x1","x2","x3").build();
+		dudfs[2] = new ExpressionBuilder("2*x3").variables("x1","x2", "x3").build();
+		
 		
 		PerfectRTree prt = new PerfectRTree(numDimensions,numSeps,numLevels);
 		prt.setDomain(1, 0, 100);
@@ -70,6 +88,7 @@ public class KSmallestSearch {
 		//4. output
 		int fanout = (int)Math.pow(numSeps, numDimensions);
 		int leaf_num = (int)Math.pow(fanout, numLevels);
+		System.out.println(cache_hits);
 		System.out.println(visit_cnt);
 		System.out.println(leaf_num);
 		System.out.println(minNode);
@@ -136,6 +155,7 @@ public class KSmallestSearch {
 	
 	private static double[] getMinNMinMaxDist(Expression udf, Expression[] dudfs, RTreeNode node) {
 		if(nodeCache.containsKey(node.id)){
+			cache_hits ++;
 			return nodeCache.get(node.id);
 		}
 		visit_cnt ++;
@@ -193,6 +213,7 @@ public class KSmallestSearch {
 
 	private static double applyUdf(Expression udf, RTreeNode leafNode) {
 		if(nodeCache.containsKey(leafNode.id)){
+			cache_hits++;
 			return nodeCache.get(leafNode.id)[0];
 		}else{
 			visit_cnt++;

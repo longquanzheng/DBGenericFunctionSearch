@@ -1,10 +1,11 @@
-package gensearch;
+package gensearchNB;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
 import com.newbrightidea.util.Node;
 
+import gensearch.Vertex;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 

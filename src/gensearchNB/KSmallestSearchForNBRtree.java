@@ -1,4 +1,4 @@
-package gensearch;
+package gensearchNB;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -8,6 +8,9 @@ import java.util.Stack;
 import com.newbrightidea.util.Node;
 import com.newbrightidea.util.RTree;
 
+import gensearch.MinMaxDist;
+import gensearch.Range;
+import gensearch.RangeExpression;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
@@ -47,8 +50,8 @@ public class KSmallestSearchForNBRtree {
 		
 		//1. Input data
 		int numDimensions = 3;
-		int minNum = 10;
-		int maxNum = 30;
+		int minNum = 32;
+		int maxNum = 64;
 		
 		Expression udf = new ExpressionBuilder("x1*x2*x3").variables("x1","x2","x3").build();
 		Expression[] dudfs = new Expression[3]; 
@@ -58,14 +61,20 @@ public class KSmallestSearchForNBRtree {
 		
 		RTree<Double> rt = new RTree<Double>(minNum,maxNum,numDimensions,RTree.SeedPicker.QUADRATIC);
 		float[] pt = new float[3];
-		int max=100;
+		
+		int max=30;
+		int cnt = 0;
 		for(int i=1; i<=max; i++){
 			for(int j=1;j<=max;j++){
 				for(int k=1; k<=max;k++){
-					pt[0] = i;
-					pt[1] = j;
-					pt[2] = k;
-					rt.insert(pt, 6.0);
+//					pt[0] = i;
+//					pt[1] = j;
+//					pt[2] = k;
+//					rt.insert(pt, 6.0);
+					pt[0] = (float) (1000 * Math.random());
+					pt[1] = (float) (1000 * Math.random());
+					pt[2] = (float) (1000 * Math.random());
+					rt.insert(pt, (double)(cnt++));
 				}
 			}
 		}
@@ -84,17 +93,13 @@ public class KSmallestSearchForNBRtree {
 		
 		//4. output
 		System.out.println(cache_hits);
-		System.out.println(visit_cnt);
+		System.out.println(visit_cnt+"/"+cnt);
+		System.out.println(Math.round( (1- visit_cnt*1.0/(cnt*1.0) ) *10000)/100.0+"%") ;
 		System.out.println(minNode);
 		System.out.println(nodeCache.get(minNode.id)[0]);
 		System.out.println(activeNodes.size());
 		System.out.println(prunedNodes.size());
-		int sum=0;
-		for(LinkedList<Node> list: prunedNodes){
-			System.out.println("*"+list.size());
-			sum+=list.size();
-		}
-		System.out.println(sum);
+		
 	}
 
 	//RTree.Node

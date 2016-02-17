@@ -42,13 +42,21 @@ public class MinMaxDistNB {
 		ArrayList<Vertex> vertexes = new ArrayList<Vertex>();
 		genAllVertexes( numDimensions, 0, "", vertexes);
 		
-		//1.2 calc all vals of vertexes, and gen hashMap for them		 
+		//1.2 calc all vals of vertexes, and gen hashMap for them	
+		for(Vertex vertex:vertexes){
+			vertex.eval(exp,numDimensions,node.MBR_S(),node.MBR_T());
+			if(vertex.expVal < res[IDX_MINDIST]){
+				res[IDX_MINDIST] = vertex.expVal;
+			}
+		}
+		/*
 		vertexes.forEach(vertex->{
 			vertex.eval(exp,numDimensions,node.MBR_S(),node.MBR_T());
 			if(vertex.expVal < res[IDX_MINDIST]){
 				res[IDX_MINDIST] = vertex.expVal;
 			}
 		});
+		*/
 		
 		//2.1 sort (in increasing order)
 		Collections.sort(vertexes);

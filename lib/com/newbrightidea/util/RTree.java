@@ -118,6 +118,42 @@ public class RTree<T>
     return size;
   }
 
+  public List<Node> searchLeavesForPt(float[] coords)
+  {
+    assert (coords.length == numDims);
+    LinkedList<Node> results = new LinkedList<Node>();
+    searchLeaves(coords, pointDims, root, results);
+    return results;
+  }
+  
+  public List<Node> searchLeaves(float[] coords, float[] dimensions)
+  {
+    assert (coords.length == numDims);
+    assert (dimensions.length == numDims);
+    LinkedList<Node> results = new LinkedList<Node>();
+    searchLeaves(coords, dimensions, root, results);
+    return results;
+  }
+
+  private void searchLeaves(float[] coords, float[] dimensions, Node n,
+      LinkedList<Node> results)
+  {
+    if (n.leaf)
+    {
+    	results.add(n);
+    }
+    else
+    {
+      for (Node c : n.children)
+      {
+        if (isOverlap(coords, dimensions, c.coords, c.dimensions))
+        {
+        	searchLeaves(coords, dimensions, c, results);
+        }
+      }
+    }
+  }
+  
   /**
    * Searches the RTree for objects overlapping with the given rectangle.
    * 

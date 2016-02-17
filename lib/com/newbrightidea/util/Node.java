@@ -14,7 +14,7 @@ public class Node {
 	private double[] MBR_T = null;
 	Node parent;
 	
-	public boolean isRealLeaf(){
+	public boolean isEntry(){
 		if(children.size()==0){
 			return true;
 		}else{

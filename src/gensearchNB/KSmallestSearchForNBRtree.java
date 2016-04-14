@@ -49,35 +49,35 @@ public class KSmallestSearchForNBRtree {
 	public static void main(String[] args) {
 		
 		//1. Input data
-		int numDimensions = 3;
-		int minNum = 32;
-		int maxNum = 64;
+		int numDimensions = 2;
+		int minNum = 8;
+		int maxNum = 16;
 		
-		Expression udf = new ExpressionBuilder("x1*x2*x3").variables("x1","x2","x3").build();
-		Expression[] dudfs = new Expression[3]; 
-		dudfs[0]= new ExpressionBuilder("x2*x3").variables("x2","x3").build();
-		dudfs[1] = new ExpressionBuilder("x1*x3").variables("x1","x3").build();
-		dudfs[2] = new ExpressionBuilder("x1*x2").variables("x1","x2").build();
+		Expression udf = new ExpressionBuilder("((x1-100)^2+(x2-200)^2)^(1/2)+((x1-300)^2+(x2-400)^2)^(1/2)")
+				.variables("x1","x2").build();
+		Expression[] dudfs = new Expression[numDimensions];
+		dudfs[0]= new ExpressionBuilder("(x1-100)/((x1-100)^2+(x2-200)^2)^(1/2)+(x1-300)/((x1-300)^2+(x2-400)^2)^(1/2)")
+				.variables("x1","x2").build();
+		dudfs[1] = new ExpressionBuilder("(x2-200)/((x1-100)^2+(x2-200)^2)^(1/2)+(x2-400)/((x1-300)^2+(x2-400)^2)^(1/2)")
+				.variables("x1","x2").build();
 		
 		RTree<Double> rt = new RTree<Double>(minNum,maxNum,numDimensions,RTree.SeedPicker.QUADRATIC);
-		float[] pt = new float[3];
+		float[] pt = new float[numDimensions];
 		
-		int max=30;
-		int cnt = 0;
-		for(int i=1; i<=max; i++){
-			for(int j=1;j<=max;j++){
-				for(int k=1; k<=max;k++){
-//					pt[0] = i;
-//					pt[1] = j;
-//					pt[2] = k;
-//					rt.insert(pt, 6.0);
-					pt[0] = (float) (1000 * Math.random());
-					pt[1] = (float) (1000 * Math.random());
-					pt[2] = (float) (1000 * Math.random());
-					rt.insert(pt, (double)(cnt++));
-				}
+		int cnt = 100000;
+		double min = Double.MAX_VALUE;
+		for(int i=1; i<=cnt; i++){
+			pt[0] = (float) (500 * Math.random());
+			pt[1] = (float) (500 * Math.random());
+			//pt[2] = (float) (1000 * Math.random());
+			double val = udf.setVariable("x1",pt[0]).setVariable("x2",pt[1]).evaluate();
+			rt.insert(pt, val);
+			if(val<min){
+				min = val;
 			}
+            System.out.println(i);
 		}
+		System.out.println(min);
 		
 		
 		//System.out.println(rt.visualize());
@@ -96,11 +96,64 @@ public class KSmallestSearchForNBRtree {
 		System.out.println(visit_cnt+"/"+cnt);
 		System.out.println(Math.round( (1- visit_cnt*1.0/(cnt*1.0) ) *10000)/100.0+"%") ;
 		System.out.println(minNode);
-		System.out.println(nodeCache.get(minNode.id)[0]);
 		System.out.println(activeNodes.size());
 		System.out.println(prunedNodes.size());
 		
 	}
+
+    public static void main3(String[] args) {
+
+        //1. Input data
+        int numDimensions = 3;
+        int minNum = 32;
+        int maxNum = 64;
+
+        Expression udf = new ExpressionBuilder("x1*x2*x3").variables("x1","x2","x3").build();
+        Expression[] dudfs = new Expression[3];
+        dudfs[0]= new ExpressionBuilder("x2*x3").variables("x2","x3").build();
+        dudfs[1] = new ExpressionBuilder("x1*x3").variables("x1","x3").build();
+        dudfs[2] = new ExpressionBuilder("x1*x2").variables("x1","x2").build();
+
+        RTree<Double> rt = new RTree<Double>(minNum,maxNum,numDimensions,RTree.SeedPicker.QUADRATIC);
+        float[] pt = new float[numDimensions];
+
+        int cnt = 5000;
+        double min = Double.MAX_VALUE;
+        for(int i=1; i<=cnt; i++){
+            pt[0] = (float) (100000 * Math.random());
+            pt[1] = (float) (100000 * Math.random());
+            pt[2] = (float) (100000 * Math.random());
+
+            double val = udf.setVariable("x1",pt[0]).setVariable("x2",pt[1]).setVariable("x3",pt[2])
+                    .evaluate();
+            rt.insert(pt, val);
+            if(val<min){
+                min = val;
+            }
+        }
+        System.out.println(min);
+
+
+        //System.out.println(rt.visualize());
+
+        //2. searching the smallest one
+        LinkedList<Node> activeNodes = new LinkedList<Node>();
+        activeNodes.add(rt.getRoot() );
+        Stack<LinkedList<Node>> prunedNodes = new Stack<LinkedList<Node>>();
+        Node minNode = searchSmallest(udf, dudfs, activeNodes, prunedNodes);
+
+        //3. searching the remain k-1 ones
+        //using the last activeNodes and prunedNodes
+
+        //4. output
+        System.out.println(cache_hits);
+        System.out.println(visit_cnt+"/"+cnt);
+        System.out.println(Math.round( (1- visit_cnt*1.0/(cnt*1.0) ) *10000)/100.0+"%") ;
+        System.out.println(minNode);
+        System.out.println(activeNodes.size());
+        System.out.println(prunedNodes.size());
+
+    }
 
 	//RTree.Node
 	private static Node searchSmallest(
@@ -223,7 +276,7 @@ public class KSmallestSearchForNBRtree {
 			cache_hits++;
 			return nodeCache.get(leafNode.id)[0];
 		}else{
-			visit_cnt++;
+			//visit_cnt++;
 			for(int i=0; i< leafNode.val().length; i++){
 				udf.setVariable("x"+(i+1), leafNode.val()[i]);
 			}

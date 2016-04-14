@@ -9,6 +9,7 @@ import net.objecthunter.exp4j.ExpressionBuilder;
 import net.objecthunter.exp4j.tokenizer.NumberToken;
 import net.objecthunter.exp4j.tokenizer.OperatorToken;
 import net.objecthunter.exp4j.tokenizer.Token;
+import net.objecthunter.exp4j.tokenizer.FunctionToken;
 import net.objecthunter.exp4j.tokenizer.VariableToken;
 
 public class RangeExpression {
@@ -58,19 +59,17 @@ public class RangeExpression {
                     output.push( rop.applyRangeOperation(arg));
                 }
             } else if (t.getType() == Token.TOKEN_FUNCTION) {
-            	throw new IllegalArgumentException("We don't support functions yet!!!");
-            	/*
                 FunctionToken func = (FunctionToken) t;
                 if (output.size() < func.getFunction().getNumArguments()) {
                     throw new IllegalArgumentException("Invalid number of arguments available for '" + func.getFunction().getName() + "' function");
                 }
-                // collect the arguments from the stack 
-                double[] args = new double[func.getFunction().getNumArguments()];
+                // collect the arguments from the stack
+                Range[] args = new Range[func.getFunction().getNumArguments()];
                 for (int j = 0; j < func.getFunction().getNumArguments(); j++) {
                     args[j] = output.pop();
                 }
-                output.push(func.getFunction().apply(this.reverseInPlace(args)));
-                */
+                output.push( RangeFunctions.getBuiltinFunction(func.getName()).apply( this.reverseInPlace(args) ));
+
             }
         }
         if (output.size() > 1) {
@@ -90,7 +89,39 @@ public class RangeExpression {
 		rexp.setVariable("x1", new Range(1,2,-5,6,-1,-3))
 			.setVariable("x2", new Range(-3,6,1,2))
 			.setVariable("x3", new Range(-3,6,1,2));
+
+        exp = new ExpressionBuilder("cos(x1)").variables("x1","x2","x3").build();
+        rexp = new RangeExpression(exp);
+
+        rexp.setVariable("x1", new Range(1,2, -5,6, -3,-1, -1,1, -3.15,1, -2,2 ) )
+                .setVariable("x2", new Range(1f/2f,1f/2f))
+                .setVariable("x3", new Range(-3,6,1,2));
 		System.out.println(rexp.evaluate());
+
+        /*
+        System.out.println( Math.ceil(3.3));
+        System.out.println( Math.floor(3.3));
+        System.out.println( Math.ceil(-3.3));
+        System.out.println( Math.floor(-3.3));
+
+        System.out.println( Math.cos(Math.PI*1));
+        System.out.println( Math.cos(Math.PI*2));
+        System.out.println( Math.cos(Math.PI*3));
+        System.out.println( Math.cos(Math.PI*-1));
+        System.out.println( Math.cos(Math.PI*-2));
+        System.out.println( Math.cos(Math.PI*-3));
+        System.out.println( Math.cos(0));
+        */
 	}
+
+    private Range[] reverseInPlace(Range[] args) {
+        int len = args.length;
+        for (int i = 0; i < len / 2; i++) {
+            Range tmp = args[i];
+            args[i] = args[len - i - 1];
+            args[len - i - 1] = tmp;
+        }
+        return args;
+    }
 
 }

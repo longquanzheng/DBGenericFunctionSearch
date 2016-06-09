@@ -44,7 +44,7 @@ public class Range {
 	}
 	
 	public String toString(){
-		StringBuilder sb = new StringBuilder(datas.length+":");
+		StringBuilder sb = new StringBuilder(datas.length+"#");
 		for(int i=0;i<datas.length; i++){
 			sb.append(i+":["+datas[i][LEFT]+","+datas[i][RIGHT]+"],");
 		}

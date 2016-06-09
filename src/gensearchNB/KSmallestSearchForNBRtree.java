@@ -19,6 +19,9 @@ public class KSmallestSearchForNBRtree {
 	//counting visiting times of nodes
 	private static long visit_cnt = 0;
 	
+	private static long notconsistent_cnt = 0;
+	private static long consistent_cnt = 0;
+	
 	//store cache of nodes, for 0:MinDist,1:MinMaxDist values(non-leaf node), and the 0,1:value of exp (leaf node)
 	private static HashMap<Long,double[]> nodeCache = new HashMap<Long,double[]>();
 	private static long cache_hits = 0;
@@ -46,41 +49,85 @@ public class KSmallestSearchForNBRtree {
 *		 ... 
 	 * @param args
 	 */
+	
+	public static void main1(String[] args) {
+		String[] fs={
+				"((x1-x2)^2+(x3-x4)^2)^(1/2)/(x5-x6)",
+				"(x1-x2)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
+				"(x2-x1)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
+				"(x3-x4)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
+				"(x4-x3)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
+				"-((x1-x2)^2+(x3-x4)^2)^(1/2) / (x5-x6)^2",
+				"((x1-x2)^2+(x3-x4)^2)^(1/2) / (x5-x6)^2",
+				};
+		 test(6,10,32,fs,100,100000);
+	}
+	
+	
 	public static void main(String[] args) {
-		
+		String[] fs={
+				"((x1-1)^2+(x2-2)^2)^(1/2)+((x1-3)^2+(x2-4)^2)^(1/2)",
+				"(x1-1)/((x1-1)^2+(x2-2)^2)^(1/2)+(x1-3)/((x1-3)^2+(x2-4)^2)^(1/2)",
+				"(x2-2)/((x1-1)^2+(x2-2)^2)^(1/2)+(x2-4)/((x1-3)^2+(x2-4)^2)^(1/2)",
+				};
+		 test(2,10,32,fs,100,100000);
+	}
+	
+	public static void main2(String[] args) {
+		String[] fs={
+				"((x1-100)^2+(x2-200)^2)^(1/2)+((x1-1000)^2+(x2-2000)^2)^(1/2)",
+				"(x1-100)/((x1-100)^2+(x2-200)^2)^(1/2)+(x1-1000)/((x1-1000)^2+(x2-2000)^2)^(1/2)",
+				"(x2-200)/((x1-100)^2+(x2-200)^2)^(1/2)+(x2-2000)/((x1-1000)^2+(x2-2000)^2)^(1/2)",
+				};
+		 test(2,10,32,fs,500,100000);
+	}
+	
+	public static void main3(String[] args) {
+
+		String[] fs={
+				"x1*x2*x3",
+				"x2*x3",
+				"x1*x3",
+				"x1*x2",
+				};
+		 test(3,32,64,fs,100000,100000);
+
+    }
+	
+	
+	public static void test(int numDim,int minNum,int maxNum,String[] fs, double valRange,int cnt ) {
 		//1. Input data
-		int numDimensions = 2;
-		int minNum = 8;
-		int maxNum = 16;
+		String[] xs = new String[numDim];
+		for(int i=0;i<numDim;i++){
+			xs[i] = "x"+(i+1);
+		}
+		Expression udf = new ExpressionBuilder(fs[0])
+				.variables(xs).build();
+		Expression[] dudfs = new Expression[numDim];
 		
-		Expression udf = new ExpressionBuilder("((x1-100)^2+(x2-200)^2)^(1/2)+((x1-300)^2+(x2-400)^2)^(1/2)")
-				.variables("x1","x2").build();
-		Expression[] dudfs = new Expression[numDimensions];
-		dudfs[0]= new ExpressionBuilder("(x1-100)/((x1-100)^2+(x2-200)^2)^(1/2)+(x1-300)/((x1-300)^2+(x2-400)^2)^(1/2)")
-				.variables("x1","x2").build();
-		dudfs[1] = new ExpressionBuilder("(x2-200)/((x1-100)^2+(x2-200)^2)^(1/2)+(x2-400)/((x1-300)^2+(x2-400)^2)^(1/2)")
-				.variables("x1","x2").build();
+		for(int i=0;i<numDim;i++){
+			dudfs[i]= new ExpressionBuilder(fs[1+1])
+					.variables(xs).build();
+		}
 		
-		RTree<Double> rt = new RTree<Double>(minNum,maxNum,numDimensions,RTree.SeedPicker.QUADRATIC);
-		float[] pt = new float[numDimensions];
+		RTree<Double> rt = new RTree<Double>(maxNum,minNum,numDim,RTree.SeedPicker.QUADRATIC);
+		float[] pt = new float[numDim];
 		
-		int cnt = 100000;
 		double min = Double.MAX_VALUE;
 		for(int i=1; i<=cnt; i++){
-			pt[0] = (float) (500 * Math.random());
-			pt[1] = (float) (500 * Math.random());
-			//pt[2] = (float) (1000 * Math.random());
-			double val = udf.setVariable("x1",pt[0]).setVariable("x2",pt[1]).evaluate();
+			
+			for(int j=0;j<numDim;j++){
+				pt[j] = (float) (valRange * Math.random());
+				udf.setVariable("x"+(j+1), pt[j]);
+			}
+			
+			double val = udf.evaluate();
 			rt.insert(pt, val);
 			if(val<min){
 				min = val;
 			}
             System.out.println(i);
 		}
-		System.out.println(min);
-		
-		
-		//System.out.println(rt.visualize());
 		
 		//2. searching the smallest one
 		LinkedList<Node> activeNodes = new LinkedList<Node>();
@@ -92,68 +139,20 @@ public class KSmallestSearchForNBRtree {
 		//using the last activeNodes and prunedNodes
 		
 		//4. output
-		System.out.println(cache_hits);
-		System.out.println(visit_cnt+"/"+cnt);
-		System.out.println(Math.round( (1- visit_cnt*1.0/(cnt*1.0) ) *10000)/100.0+"%") ;
-		System.out.println(minNode);
-		System.out.println(activeNodes.size());
-		System.out.println(prunedNodes.size());
+		printOutput(minNode,cnt,min,notconsistent_cnt,consistent_cnt);
 		
 	}
 
-    public static void main3(String[] args) {
-
-        //1. Input data
-        int numDimensions = 3;
-        int minNum = 32;
-        int maxNum = 64;
-
-        Expression udf = new ExpressionBuilder("x1*x2*x3").variables("x1","x2","x3").build();
-        Expression[] dudfs = new Expression[3];
-        dudfs[0]= new ExpressionBuilder("x2*x3").variables("x2","x3").build();
-        dudfs[1] = new ExpressionBuilder("x1*x3").variables("x1","x3").build();
-        dudfs[2] = new ExpressionBuilder("x1*x2").variables("x1","x2").build();
-
-        RTree<Double> rt = new RTree<Double>(minNum,maxNum,numDimensions,RTree.SeedPicker.QUADRATIC);
-        float[] pt = new float[numDimensions];
-
-        int cnt = 5000;
-        double min = Double.MAX_VALUE;
-        for(int i=1; i<=cnt; i++){
-            pt[0] = (float) (100000 * Math.random());
-            pt[1] = (float) (100000 * Math.random());
-            pt[2] = (float) (100000 * Math.random());
-
-            double val = udf.setVariable("x1",pt[0]).setVariable("x2",pt[1]).setVariable("x3",pt[2])
-                    .evaluate();
-            rt.insert(pt, val);
-            if(val<min){
-                min = val;
-            }
-        }
-        System.out.println(min);
-
-
-        //System.out.println(rt.visualize());
-
-        //2. searching the smallest one
-        LinkedList<Node> activeNodes = new LinkedList<Node>();
-        activeNodes.add(rt.getRoot() );
-        Stack<LinkedList<Node>> prunedNodes = new Stack<LinkedList<Node>>();
-        Node minNode = searchSmallest(udf, dudfs, activeNodes, prunedNodes);
-
-        //3. searching the remain k-1 ones
-        //using the last activeNodes and prunedNodes
-
-        //4. output
-        System.out.println(cache_hits);
-        System.out.println(visit_cnt+"/"+cnt);
-        System.out.println(Math.round( (1- visit_cnt*1.0/(cnt*1.0) ) *10000)/100.0+"%") ;
-        System.out.println(minNode);
-        System.out.println(activeNodes.size());
-        System.out.println(prunedNodes.size());
-
-    }
+	static void printOutput(Node minNode, double cnt, double min, long notconsistent_cnt2, long consistent_cnt2){
+		System.out.println("cache_hits:"+cache_hits);
+		System.out.println("visit_cnt rate:"+visit_cnt+"/"+cnt);
+		System.out.println("saving rate:"+Math.round( (1- visit_cnt*1.0/(cnt*1.0) ) *10000)/100.0+"%") ;
+		System.out.println("$real min:"+min);
+		System.out.println("$calc min:"+minNode);
+		System.out.println("nonconsistent:"+notconsistent_cnt2+",consistent:"+consistent_cnt2);
+	}
+	
+    
 
 	//RTree.Node
 	private static Node searchSmallest(
@@ -169,6 +168,7 @@ public class KSmallestSearchForNBRtree {
 				//1. collect all sub-nodes from activeNodes
 				LinkedList<Node> tmpList = new LinkedList<Node>();
 				for(Node node : activeNodes){
+					System.out.println("node children cnt:"+node.children.size());
 					for(Node subN : node.children){
 						tmpList.add(subN);
 					}
@@ -243,6 +243,8 @@ public class KSmallestSearchForNBRtree {
 			
 			//2.0
 			if(i<dudfs.length){//not all vars are consistent, then use the sub-Nodes
+				//System.out.println("not cons");
+				notconsistent_cnt++;
 				//2.1 get min and minmax of all sub-Nodes 
 				LinkedList<double[]> resList = new LinkedList<double[]> ();
 				for(Node sn : node.children){
@@ -264,6 +266,8 @@ public class KSmallestSearchForNBRtree {
 				return res;
 				
 			}else{ // all are consistent, use the vertexes
+				//System.out.println("yes cons");
+				consistent_cnt++;
 				double[] res = MinMaxDistNB.calc(udf, dudfs.length, node);
 				nodeCache.put(node.id, res);
 				return res;

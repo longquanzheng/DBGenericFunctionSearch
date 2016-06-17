@@ -2,11 +2,17 @@ package gensearch;
 
 import java.util.ArrayList;
 
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
+
 public class PerfectRTree {
 
 	private int numDimensions,numLevels,fanout,numSeps;
 	
 	private Range[] domains;
+	
+	private Expression udf;
+	public double minudf;
 	
 	//R-tree root
 	public RTreeNode root;
@@ -33,7 +39,10 @@ public class PerfectRTree {
 		return this;
 	}
 	
-	public PerfectRTree buildRandomly(){
+	public PerfectRTree buildRandomly(Expression udf){
+		this.udf = udf;
+		this.minudf = Double.POSITIVE_INFINITY;
+		
 		//1.build empty tree first
 		root = new RTreeNode();
 		buildNextLevel(root,numLevels);
@@ -50,6 +59,11 @@ public class PerfectRTree {
 			//fill each dimension using currDomain
 			for(int i=0; i<numDimensions; i++){
 				node.val[i] = getRand(currDomains[i]);
+				udf.setVariable("x"+(i+1), node.val[i]);
+			}
+			double curr = udf.evaluate();
+			if(curr<this.minudf){
+				this.minudf = curr;
 			}
 		}else{
 			//1. generate new domains using steps and visiting sub-nodes
@@ -163,7 +177,20 @@ public class PerfectRTree {
 		PerfectRTree prt = new PerfectRTree(3,2,2);
 		prt.setDomain(1, 0, 100);
 		prt.setDomain(2, -1000,1000);
-		prt.buildRandomly();
+		String[] fs={
+				"((x1-x2)^2+(x3-x4)^2)^(1/2)/(x5-x6)",
+				
+				"(x1-x2)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
+				"(x2-x1)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
+				"(x3-x4)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
+				"(x4-x3)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
+				"-((x1-x2)^2+(x3-x4)^2)^(1/2) / (x5-x6)^2",
+				"((x1-x2)^2+(x3-x4)^2)^(1/2) / (x5-x6)^2",
+				};
+		
+		Expression udf = new ExpressionBuilder(fs[0])
+				.variables("x1","x2","x3","x4","x5","x6").build();
+		prt.buildRandomly(udf);
 		System.out.println(prt.root);
 
 	}

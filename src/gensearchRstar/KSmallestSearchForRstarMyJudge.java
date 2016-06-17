@@ -171,6 +171,15 @@ public class KSmallestSearchForRstarMyJudge {
 				}else{
 					pt[j] = (float) (valRange * Math.random());
 				}
+				
+				
+			}
+			if(pt[4]<pt[5]){
+				float swp = pt[4];
+				pt[4] = pt[5];
+				pt[5] = swp;
+			}
+			for(int j=0;j<numDim;j++){
 				udf.setVariable("x"+(j+1), pt[j]);
 			}
 			

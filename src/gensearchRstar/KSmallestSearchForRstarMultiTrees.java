@@ -17,7 +17,7 @@ import rstar.nodes.RStarLeaf;
 import rstar.nodes.RStarNode;
 import rstar.spatial.SpatialPoint;
 
-public class KSmallestSearchForRstar {
+public class KSmallestSearchForRstarMultiTrees {
 	
 	//counting visiting times of nodes
 	private static long visit_cnt = 0;
@@ -71,15 +71,7 @@ public class KSmallestSearchForRstar {
 		main9(args);
 	}
 	
-	public static void main7(String[] args) {
-		//try bad case
-		String[] fs={
-				"1/(x1-x2)^2",
-				"-2/(x1-x2)^3",
-				"2/(x1-x2)^3",
-				};
-		 test(2,10,32,fs,1,100000,5);
-	}
+	
 	
 	
 	public static void main9(String[] args) {
@@ -97,49 +89,7 @@ public class KSmallestSearchForRstar {
 		 test(6,4,8,fs,100,50000,1);
 	}
 	
-	public static void main1(String[] args) {
-		//speed of 1 dim
-		String[] fs={
-				"(x1-x2)/(x3-x4)",
-				"1/(x3-x4)",
-				"-1/(x3-x4)",
-				"-(x1-x2)/(x3-x4)^2",
-				"(x1-x2)/(x3-x4)^2"
-				};
-		 test(4,10,32,fs,1000,100000,1);
-	}
 	
-	public static void main4(String[] args) {
-		//sum of 2 distances
-		String[] fs={
-				"((x1-1)^2+(x2-2)^2)^(1/2)+((x1-3)^2+(x2-4)^2)^(1/2)",
-				"(x1-1)/((x1-1)^2+(x2-2)^2)^(1/2)+(x1-3)/((x1-3)^2+(x2-4)^2)^(1/2)",
-				"(x2-2)/((x1-1)^2+(x2-2)^2)^(1/2)+(x2-4)/((x1-3)^2+(x2-4)^2)^(1/2)",
-				};
-		 test(2,10,32,fs,100,100000,1);
-	}
-	
-	public static void main2(String[] args) {
-		//another sum of 2 distances
-		String[] fs={
-				"((x1-100)^2+(x2-200)^2)^(1/2)+((x1-1000)^2+(x2-2000)^2)^(1/2)",
-				"(x1-100)/((x1-100)^2+(x2-200)^2)^(1/2)+(x1-1000)/((x1-1000)^2+(x2-2000)^2)^(1/2)",
-				"(x2-200)/((x1-100)^2+(x2-200)^2)^(1/2)+(x2-2000)/((x1-1000)^2+(x2-2000)^2)^(1/2)",
-				};
-		 test(2,10,32,fs,500,100000,1);
-	}
-	
-	public static void main0(String[] args) {
-		//multiple function
-		String[] fs={
-				"x1*x2*x3",
-				"x2*x3",
-				"x1*x3",
-				"x1*x2",
-				};
-		 test(3,32,64,fs,100,1000,1);
-
-    }
 	
 	
 	public static void test(int numDim,int minNum,int maxNum,String[] fs, double valRange,int cnt, double diffRate ) {
@@ -159,7 +109,9 @@ public class KSmallestSearchForRstar {
 		
 		
 		//RTree<Double> rt = new RTree<Double>(maxNum,minNum,numDim,RTree.SeedPicker.QUADRATIC);
-		RStarTree rt = new RStarTree(numDim);
+		RStarTree rt1 = new RStarTree(numDim);
+		RStarTree rt2 = new RStarTree(numDim);
+		
 		float[] pt = new float[numDim];
 		
 		double min = Double.MAX_VALUE;
@@ -175,29 +127,34 @@ public class KSmallestSearchForRstar {
 			}
 			
 			double val = udf.evaluate();
-			rt.insert(new SpatialPoint(pt, (float) val));
+			if(pt[4]>pt[5]){
+				rt1.insert(new SpatialPoint(pt, (float) val));
+			}else{
+				rt2.insert(new SpatialPoint(pt, (float) val));
+			}
+			
 			//rt.insert(pt, val);
 			if(val<min){
 				min = val;
 			}
             System.out.println(i);
 		}
-		rt.save();
-		System.out.println(rt);
+		System.out.println(rt1);
+		System.out.println(rt2);
 		
 		//2. searching the smallest one
 		LinkedList<RStarNode> activeNodes = new LinkedList<RStarNode>();
-		activeNodes.add(rt.getRoot() );
+		activeNodes.add(rt1.getRoot() );
 		Stack<LinkedList<RStarNode>> prunedNodes = new Stack<LinkedList<RStarNode>>();
-		 SpatialPoint minPt = searchSmallest(rt,udf, dudfs, activeNodes, prunedNodes);
+		 SpatialPoint minPt = searchSmallest(rt1,udf, dudfs, activeNodes, prunedNodes);
 		 printOutput(udf, minPt,cnt,min,notconsistent_cnt,consistent_cnt);
-//		 activeNodes.clear();
-//		 activeNodes.add(rt.getRoot() );
-//		 resetStatis();
-//		 
-//		 
-//		 minPt = searchSmallest(rt,udf, dudfs, activeNodes, prunedNodes);
-//		 printOutput(udf, minPt,cnt,min,notconsistent_cnt,consistent_cnt);
+		 activeNodes.clear();
+		 activeNodes.add(rt2.getRoot() );
+		 resetStatis();
+		 
+		 
+		 minPt = searchSmallest(rt2,udf, dudfs, activeNodes, prunedNodes);
+		 printOutput(udf, minPt,cnt,min,notconsistent_cnt,consistent_cnt);
 //		 activeNodes.clear();
 //		 activeNodes.add(rt.getRoot() );
 //		 resetStatis();

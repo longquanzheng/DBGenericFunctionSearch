@@ -1,4 +1,4 @@
-package gensearchNB;
+package gensearchRstar;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,22 +8,28 @@ import com.newbrightidea.util.Node;
 import gensearch.Vertex;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
+import rstar.nodes.RStarInternal;
+import rstar.nodes.RStarNode;
+import rstar.spatial.HyperRectangle;
+import rstar.spatial.SpatialPoint;
 
-public class MinMaxDistNB {
+public class MinMaxDistRstar {
 
 	public static void main(String[] args) {
-		//Expression exp = new ExpressionBuilder("x1*x2*x3").variables("x1","x2","x3").build();
-		//float[] mbrS={1,2,3}, dim={3,3,3};
-		int numDim = 6;
-		Expression exp = new ExpressionBuilder("((x1-x2)^2+(x3-x4)^2)^(1/2)/(x5-x6)").variables("x1","x2","x3","x4","x5","x6").build();
-		float[] mbrs = {38.742382f,	17.37273f,	2.3635745f,	72.080864f,	87.266106f,	73.88579f};			
-		float[] mbrt = {98.08647f,	24.163364f,	38.160213f,	99.2525f,	98.62511f,	84.5554f};	
-		float[] dim = new float[mbrs.length];
-		for(int i=0;i<mbrs.length;i++){
-			dim[i] = mbrt[i]-mbrs[i];
-		}
-		Node  rtn = new Node (mbrs,dim,false);
-		double[] res = calc(exp,6,rtn);
+		Expression exp = new ExpressionBuilder("x1*x2*x3").variables("x1","x2","x3").build();
+		float[] mbrS={1,2,3}, mbrT={4,5,6};
+		SpatialPoint minPt = new SpatialPoint(mbrS);
+		SpatialPoint maxPt = new SpatialPoint(mbrT);
+		
+		//Node  rtn = new Node (mbrS,mbrT,false);
+		//float[][] points = {  {3,3,3},{1,2,3} };
+		RStarInternal rtn = new RStarInternal(3);
+		
+		HyperRectangle rec = new HyperRectangle(3);
+		rec.update(minPt);
+		rec.update(maxPt);
+		rtn.setMbr(rec);
+		double[] res = calc(exp,3,rtn);
 		System.out.println(res[IDX_MINDIST]+"  "+ res[IDX_MINMAXDIST]);
 	}
 
@@ -41,7 +47,7 @@ public class MinMaxDistNB {
 	4. return [0:MinDist 1:MinMaxDist]
 	 
 	 **/
-	public static double[] calc(Expression exp, int numDimensions, Node node){
+	public static double[] calc(Expression exp, int numDimensions, RStarNode node){
 		double[] res = new double[2];
 		res[IDX_MINDIST] = Double.POSITIVE_INFINITY;
 		res[IDX_MINMAXDIST] = Double.POSITIVE_INFINITY;
@@ -52,7 +58,8 @@ public class MinMaxDistNB {
 		
 		//1.2 calc all vals of vertexes, and gen hashMap for them	
 		for(Vertex vertex:vertexes){
-			vertex.eval(exp,numDimensions,node.MBR_S(),node.MBR_T());
+			//vertex.eval(exp,numDimensions,node.MBR_S(),node.MBR_T());
+			vertex.eval(exp,numDimensions,node.getMBR());
 			if(vertex.expVal < res[IDX_MINDIST]){
 				res[IDX_MINDIST] = vertex.expVal;
 			}
@@ -102,8 +109,10 @@ public class MinMaxDistNB {
 		if(currDim == numDimensions-1){//last one, write into vertexes
 			String idx = prefix+"0";
 			Vertex v = new Vertex(idx);
+			//System.out.println(idx);
 			vertexes.add(v);
 			idx = prefix+"1";
+			//System.out.println(idx);
 			v = new Vertex(idx);
 			vertexes.add(v);
 		}else{//add prefix and goto next

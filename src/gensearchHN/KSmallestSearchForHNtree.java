@@ -3,6 +3,7 @@ package gensearchHN;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.Stack;
 
 import gensearch.MinMaxDist;
@@ -26,6 +27,7 @@ public class KSmallestSearchForHNtree {
 
     private static int cons_cnt = 0;
     private static int uncons_cnt = 0;
+    private static int uncons_bad_cnt = 0;
     
     /**
      * input: numDimensions:num of dimensions, also num of vars in udf
@@ -49,8 +51,8 @@ public class KSmallestSearchForHNtree {
         // 1. Input data
         int numDim = 6;
         int minCh = 1;
-        int maxCh = 300;
-        int entryNum = 50000;
+        int maxCh = 255;
+        int entryNum = 5000000;
 
         String[] fs = { "((x1-x2)^2+(x3-x4)^2)^(1/2)/(x5-x6)",
 
@@ -70,15 +72,18 @@ public class KSmallestSearchForHNtree {
 
         double min = Double.MAX_VALUE;
         float[] pt = new float[numDim];
+
+        Random rand = new Random(System.currentTimeMillis());
+
         for (int i = 0; i < entryNum; i++) {
 
             for (int j = 0; j < numDim; j++) {
-                pt[j] = (float) (1000 * Math.random());
-                if(pt[4]>pt[5]){
-                    float tmp = pt[4];
-                    pt[4] = pt[5];
-                    pt[5] = tmp;
-                }
+                pt[j] = rand.nextFloat() * 100;
+                // if(pt[4]>pt[5]){
+                // float tmp = pt[4];
+                // pt[4] = pt[5];
+                // pt[5] = tmp;
+                // }
             }
 
             for (int j = 0; j < numDim; j++) {
@@ -90,40 +95,52 @@ public class KSmallestSearchForHNtree {
             if (val < min) {
                 min = val;
             }
-            if (i % 100 == 0) {
-                System.out.println("insert #" + i);
+            if (i % 5000 == 0 && i > 0) {
+                System.out.println("insert ###################" + i + "$" + val + pt[0] + "," + pt[1]);
+                resetStatis();
+                // 2. searching the smallest one
+                LinkedList<HNTreeNode> activeNodes = new LinkedList<HNTreeNode>();
+                activeNodes.add(rt.root);
+                Stack<LinkedList<HNTreeNode>> prunedNodes = new Stack<LinkedList<HNTreeNode>>();
+                HNTreeNode minNode = searchSmallest(udf, dudfs, activeNodes, prunedNodes);
+
+                // 3. searching the remain k-1 ones
+                // using the last activeNodes and prunedNodes
+
+                // 4. output
+                System.out.println("cache_hits" + cache_hits);
+                System.out.println("entryNum" + i);
+                System.out.println("visit_cnt" + visit_cnt);
+                System.out.println("entry_visit_cnt" + entry_visit_cnt);
+                System.out.println("visit_cnt / entryNum" + Math.round(visit_cnt * 1.0 / i * 100000.0) / 1000.0 + "%");
+                System.out.println("entry_visit_cnt / entryNum" + Math.round(entry_visit_cnt * 1.0 / i * 100000.0) / 1000.0 + "%");
+                System.out.println("visit_cnt+entry_visit_cnt / entryNum" + Math.round((visit_cnt+entry_visit_cnt) * 1.0 / i * 100000.0) / 1000.0 + "%");
+                System.out.println(minNode.id);
+                System.out.println(min);
+                double calcMin = applyUdf(udf, minNode);
+                System.out.println(calcMin);
+                if (min != calcMin) {
+                    System.err.println("not match!");
+                }
+                System.out.println("cons_cnt" + cons_cnt);
+                System.out.println("uncons_cnt" + uncons_cnt);
+                System.out.println("uncons_bad_cnt" + uncons_bad_cnt);
+                rand = new Random(System.currentTimeMillis());
             }
         }
 
-        // System.out.println(rt);
 
-        // 2. searching the smallest one
-        LinkedList<HNTreeNode> activeNodes = new LinkedList<HNTreeNode>();
-        activeNodes.add(rt.root);
-        Stack<LinkedList<HNTreeNode>> prunedNodes = new Stack<LinkedList<HNTreeNode>>();
-        HNTreeNode minNode = searchSmallest(udf, dudfs, activeNodes, prunedNodes);
 
-        // 3. searching the remain k-1 ones
-        // using the last activeNodes and prunedNodes
-
-        // 4. output
-        System.out.println("cache_hits" + cache_hits);
-        System.out.println("entryNum" + entryNum);
-        System.out.println("visit_cnt" + visit_cnt);
-        System.out.println("entry_visit_cnt" + entry_visit_cnt);
-        System.out.println("visit_cnt / entryNum" + Math.round(visit_cnt * 1.0 / entryNum * 100000.0) / 1000.0 + "%");
-        System.out.println("entry_visit_cnt / entryNum" + Math.round(entry_visit_cnt * 1.0 / entryNum * 100000.0) / 1000.0 + "%");
-        System.out.println(minNode.id);
-        System.out.println(min);
-        double calcMin = applyUdf(udf, minNode);
-        System.out.println(calcMin);
-        if (min != calcMin) {
-            System.err.println("not match!");
-        }
-        System.out.println("cons_cnt" + cons_cnt);
-        System.out.println("uncons_cnt" + uncons_cnt);
     }
 
+    private static void resetStatis() {
+        visit_cnt = entry_visit_cnt = cache_hits = cons_cnt = uncons_cnt = uncons_bad_cnt = 0;
+
+        // store cache of nodes, for 0:MinDist,1:MinMaxDist values(non-leaf
+        // node), and the 0,1:value of exp (leaf node)
+        nodeCache = new HashMap<Long, double[]>();
+
+    }
     private static HNTreeNode searchSmallest(Expression udf, Expression[] dudfs, LinkedList<HNTreeNode> activeNodes, Stack<LinkedList<HNTreeNode>> prunedNodes) {
         while (true) {
             // if at the end, return the first one if there are more than 1
@@ -215,6 +232,9 @@ public class KSmallestSearchForHNtree {
                                    // sub-Nodes
                 // 2.1 get min and minmax of all sub-Nodes
                 uncons_cnt++;
+                if (myJudgeBad(node.getMBR().getS()[4], node.getMBR().getT()[4], node.getMBR().getS()[5], node.getMBR().getT()[5])) {
+                    uncons_bad_cnt++;
+                }
                 LinkedList<double[]> resList = new LinkedList<double[]>();
                 for (HNTreeNode sn : node.children) {
                     resList.add(getMinNMinMaxDist(udf, dudfs, sn));
@@ -241,6 +261,15 @@ public class KSmallestSearchForHNtree {
                 nodeCache.put(node.id, res);
                 return res;
             }
+        }
+    }
+
+    private static boolean myJudgeBad(float x51, float x52, float x61, float x62) {
+
+        if (x51 > x62 || x52 < x61) {
+            return false;
+        } else {
+            return true;
         }
     }
 

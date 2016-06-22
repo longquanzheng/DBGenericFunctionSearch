@@ -74,8 +74,16 @@ public class HNTreeNode {
 	public void insert(float[] point) {
 		HNTreeNode entry = new HNTreeNode(this,point);
 		this.children.add(entry);
-        this.mbr.updateMBR(point);
+        updateMBRRecursively(this, point);
+
 	}
+
+    private void updateMBRRecursively(HNTreeNode hnTreeNode, float[] point) {
+        boolean hasChanged = hnTreeNode.mbr.updateMBR(point);
+        if (hasChanged && hnTreeNode.parent != null) {
+            updateMBRRecursively(hnTreeNode.parent, point);
+        }
+    }
 
     public static Comparator<HNTreeNode> mbrComparator(int i) {
         return new Comparator<HNTreeNode>() {
@@ -128,6 +136,10 @@ public class HNTreeNode {
             d[i] = res[i];
         }
         return d;
+    }
+
+    public void setIsLeaf(boolean b) {
+        this.isLeaf = b;
     }
 
 }

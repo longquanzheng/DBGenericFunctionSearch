@@ -8,11 +8,15 @@ public class MBR {
 	private float[] _mbrT;
 	
     public String toString() {
-        String s = "{";
+        String s = "[";
         for (int i = 0; i < _mbrS.length; i++) {
-            s += i + ":[" + _mbrS[i] + ", " + _mbrT[i] + "], ";
+            s += _mbrS[i] + ", ";
         }
-        s += "}";
+        s += "],\t[";
+        for (int i = 0; i < _mbrS.length; i++) {
+            s += _mbrT[i] + ", ";
+        }
+        s += "],\t";
         return s;
     }
 	public MBR(float[] s, float[] t){
@@ -24,8 +28,9 @@ public class MBR {
 	}
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+        float[] s = { 1, 2, 3 }, t = { 4, 5, 6 };
+        MBR m = new MBR(s, t);
+        System.out.println(m);
 	}
 
     public float[] getS() {
@@ -65,15 +70,19 @@ public class MBR {
         }
     }
 
-    public void updateMBR(float[] point) {
+    public boolean updateMBR(float[] point) {
+        boolean flag = false;
         for (int i = 0; i < point.length; i++) {
             if (this.getS()[i] > point[i]) {
                 this.getS()[i] = point[i];
+                flag = true;
             }
             if (this.getT()[i] < point[i]) {
                 this.getT()[i] = point[i];
+                flag = true;
             }
         }
+        return flag;
     }
 
     public static double calcOverlap(MBR mbr1, MBR mbr2) {

@@ -17,6 +17,7 @@ public class KSmallestSearchForHNtree {
 
     // counting visiting times of nodes
     private static long visit_cnt = 0;
+    private static long entry_visit_cnt = 0;
 
     // store cache of nodes, for 0:MinDist,1:MinMaxDist values(non-leaf node),
     // and the 0,1:value of exp (leaf node)
@@ -48,8 +49,8 @@ public class KSmallestSearchForHNtree {
         // 1. Input data
         int numDim = 6;
         int minCh = 1;
-        int maxCh = 192;
-        int entryNum = 1000000;
+        int maxCh = 300;
+        int entryNum = 50000;
 
         String[] fs = { "((x1-x2)^2+(x3-x4)^2)^(1/2)/(x5-x6)",
 
@@ -73,7 +74,12 @@ public class KSmallestSearchForHNtree {
 
             for (int j = 0; j < numDim; j++) {
                 pt[j] = (float) (1000 * Math.random());
+                if(pt[4]>pt[5]){
+                    float tmp = pt[4];
+                    pt[4] = pt[5];
+                    pt[5] = tmp;
                 }
+            }
 
             for (int j = 0; j < numDim; j++) {
                 udf.setVariable("x" + (j + 1), pt[j]);
@@ -104,7 +110,9 @@ public class KSmallestSearchForHNtree {
         System.out.println("cache_hits" + cache_hits);
         System.out.println("entryNum" + entryNum);
         System.out.println("visit_cnt" + visit_cnt);
+        System.out.println("entry_visit_cnt" + entry_visit_cnt);
         System.out.println("visit_cnt / entryNum" + Math.round(visit_cnt * 1.0 / entryNum * 100000.0) / 1000.0 + "%");
+        System.out.println("entry_visit_cnt / entryNum" + Math.round(entry_visit_cnt * 1.0 / entryNum * 100000.0) / 1000.0 + "%");
         System.out.println(minNode.id);
         System.out.println(min);
         double calcMin = applyUdf(udf, minNode);
@@ -177,7 +185,7 @@ public class KSmallestSearchForHNtree {
             cache_hits++;
             return nodeCache.get(node.id);
         }
-        visit_cnt++;
+
 
         // if node is leaf then applyUdf to get directly
         if (node.isEntry()) {
@@ -187,6 +195,7 @@ public class KSmallestSearchForHNtree {
         } else {// otherwise try to use MBR only
                 // 1.0 check range first, using vertexes only when all dudfs are
                 // consistent
+            visit_cnt++;
             int i = 0;
             int numDimensions = dudfs.length;
             for (; i < dudfs.length; i++) {
@@ -240,7 +249,7 @@ public class KSmallestSearchForHNtree {
             cache_hits++;
             return nodeCache.get(leafNode.id)[0];
         } else {
-            visit_cnt++;
+            entry_visit_cnt++;
             for (int i = 0; i < leafNode.getVal().length; i++) {
                 udf.setVariable("x" + (i + 1), leafNode.getVal()[i]);
             }

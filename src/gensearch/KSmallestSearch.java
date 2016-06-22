@@ -47,7 +47,7 @@ public class KSmallestSearch {
 		
 		//1. Input data
 		int numDimensions = 6;
-		int numLevels = 4;
+        int numLevels = 3;
 		int numSeps = 2;
 		//int k=1; TODO
 		

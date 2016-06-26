@@ -2,12 +2,22 @@ package qlong.hntree;
 
 import java.awt.Color;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 
 public class HNTree {
+
+    private static final String KEY_SorT = "MBRS_OR_MBRT";
+
+    private static final int VALUE_SorT_S = 0;
+    private static final int VALUE_SorT_T = 1;
+
+    private static final String KEY_axis = "axis";
+
+    private static final String KEY_index = "index";
 
     public final int numDim, minChildren, maxChildren;
 
@@ -15,10 +25,13 @@ public class HNTree {
 
     private static Color[] colors = { Color.RED, Color.BLACK, Color.BLUE, Color.CYAN, Color.ORANGE, Color.PINK, Color.GREEN, };
 
-    private float baseRange = 0;
+    private int baseRange = 0;
     public static void main(String[] args) {
-        HNTree t = new HNTree(2, 1, 5);
-        t.baseRange = 1000;
+        HNTree t = new HNTree(2, 8, 32);
+        t.baseRange = 500;
+        boolean useData = false;
+        int entryNum = 1000;
+
         double[][] pts = { { 67.0, 490.0 }, { 237.0, 474.0 }, { 121.0, 476.0 }, { 114.0, 235.0 }, { 354.0, 411.0 }, { 354.0, 175.0 }, { 132.0, 413.0 }, { 121.0, 351.0 }, { 117.0, 192.0 }, { 282.0, 109.0 }, { 344.0, 449.0 }, { 44.0, 29.0 },
                 { 214.0, 202.0 }, { 488.0, 418.0 }, { 266.0, 123.0 }, { 41.0, 243.0 }, { 225.0, 57.0 }, { 186.0, 420.0 }, { 351.0, 453.0 }, { 139.0, 173.0 }, { 48.0, 70.0 }, { 268.0, 180.0 }, { 496.0, 388.0 }, { 234.0, 71.0 }, { 271.0, 327.0 },
                 { 160.0, 405.0 }, { 24.0, 497.0 }, { 118.0, 70.0 }, { 258.0, 371.0 }, { 337.0, 202.0 }, { 132.0, 445.0 }, { 304.0, 47.0 }, { 485.0, 146.0 }, { 308.0, 351.0 }, { 415.0, 455.0 }, { 38.0, 259.0 }, { 317.0, 433.0 }, { 25.0, 379.0 },
@@ -27,13 +40,20 @@ public class HNTree {
                 { 431.0, 183.0 }, { 430.0, 7.0 }, { 190.0, 373.0 }, { 415.0, 174.0 }, { 48.0, 261.0 }, { 384.0, 334.0 }, { 20.0, 173.0 }, { 0.0, 94.0 }, { 486.0, 34.0 }, { 149.0, 141.0 }, { 91.0, 74.0 }, { 239.0, 22.0 }, { 0.0, 149.0 },
                 { 398.0, 18.0 }, { 100.0, 155.0 }, { 92.0, 189.0 }, { 435.0, 86.0 }, { 26.0, 114.0 }, { 157.0, 377.0 }, { 26.0, 202.0 }, { 217.0, 250.0 }, { 231.0, 417.0 }, { 324.0, 435.0 }, { 64.0, 135.0 }, { 410.0, 206.0 }, { 315.0, 388.0 },
                 { 420.0, 384.0 }, { 143.0, 92.0 }, { 260.0, 72.0 }, { 412.0, 487.0 }, { 68.0, 78.0 }, { 45.0, 356.0 }, { 280.0, 188.0 }, { 475.0, 250.0 }, { 103.0, 130.0 }, { 302.0, 341.0 }, };
-        for (int i = 0; i < 200; i++) {
+
+        if (useData) {
+            entryNum = pts.length;
+        }
+        for (int i = 0; i < entryNum; i++) {
             float[] pt = new float[2];
-            // pt[0] = pt[1] = 1;
-            pt[0] = (float) (int) (Math.random() * t.baseRange);
-            pt[1] = (float) (int) (Math.random() * t.baseRange);
-            // pt[0] = (float) pts[i][0];
-            // pt[1] = (float) pts[i][1];
+
+            if (useData) {
+                pt[0] = (float) pts[i][0];
+                pt[1] = (float) pts[i][1];
+            } else {
+                pt[0] = (float) (int) (Math.random() * t.baseRange);
+                pt[1] = (float) (int) (Math.random() * t.baseRange);
+            }
             t.insert(pt);
             System.out.println(i + "-insert:" + pt[0] + "," + pt[1] + "...");
 
@@ -44,7 +64,7 @@ public class HNTree {
     @Override
     public String toString() {
         // String s = "root:"+root.nodeId+"#\n";
-        Visulizer.start();
+        Visulizer.start(this.baseRange + 100);
         return toString(1, root);
     }
 
@@ -59,7 +79,7 @@ public class HNTree {
         float[] mbrT = node.getMBR().getT();
         
         Color color = colors[curr - 1];
-        addRec(mbrS[0], mbrS[1], mbrT[0] - mbrS[0], mbrT[1] - mbrS[1], color);
+        addRec(mbrS[0], mbrS[1], mbrT[0] - mbrS[0] + curr, mbrT[1] - mbrS[1] + curr, color);
 
         // Color randomColor = new Color((float) Math.random(), (float)
         // Math.random(), (float) Math.random());
@@ -108,7 +128,7 @@ public class HNTree {
             root = new HNTreeNode(null, point, point, true);
         }
 
-        HNTreeNode leaf = chooseLeaf(root, point);
+        HNTreeNode leaf = chooseSubTree(root, point);
         leaf.insert(point);
         if (leaf.children.size() > maxChildren) {
             treatOverflow(leaf);
@@ -117,40 +137,16 @@ public class HNTree {
     }
 
     private void treatOverflow(HNTreeNode node) {
-        int sizeInc = (int) Math.pow(2, numDim);
         List<List<HNTreeNode>> split = new LinkedList<List<HNTreeNode>>();
+        // FIXME we may support split to more than 2 in the future
         split.add(node.children);
-        Random rand = new Random(System.currentTimeMillis());
-        // int x0to1 = rand.nextInt(2);
-        // int x2to3 = rand.nextInt(2) + 2;
-        // System.out.println(x0to1);
-        // System.out.println(x2to3);
-        // split = split2PartsAtDim(split, x0to1);
-        // split = split2PartsAtDim(split, x2to3);
-        // split = split2PartsAtDim(split, 4);
-        // split = split2PartsAtDim(split, 5);
-        for (int i = 0; i < numDim; i++) {
-            // split to 2 parts for each dimension
-            split = split2PartsAtDim(split, i);
-        }
 
-        // if (split.size() != sizeInc) {
-        // System.err.println("split size=" + split.size());
-        // }
+        Map<String, Integer> axisNidx = chooseAxisNIndex(split);
+        split = split2Parts(split, axisNidx);
+
 
         if (node == root) {
-            // MBR newmbr = MBR.generateMBR(newnodes);
-            // HNTreeNode newroot = new HNTreeNode(null, node.getMBR().getS(),
-            // node.getMBR().getT(), false);
-
-            // update parent
-            // for (HNTreeNode n : newnodes) {
-            // n.parent = newroot;
-            // }
-            // node.parent = newroot;
             List<HNTreeNode> newnodes = buildNodes(split, node, node.isLeaf());
-            // root = newroot;
-            // newroot.children = newnodes;
             root.children = newnodes;
             root.setIsLeaf(false);
         } else {
@@ -174,6 +170,70 @@ public class HNTree {
     }
 
 
+    private Map<String, Integer> chooseAxisNIndex(List<List<HNTreeNode>> split) {
+        List<HNTreeNode> sortedList = split.get(0);
+        if (sortedList.size() != maxChildren + 1) {
+            System.err.println("NO!!");
+        }
+
+        double minimumMargin = Double.POSITIVE_INFINITY;
+        double minimumOverlap = Double.POSITIVE_INFINITY;
+        double minimumVolumn = Double.POSITIVE_INFINITY;
+        Map<String, Integer> ret = new HashMap<String,Integer>();
+        for (int axis = 0; axis < numDim; axis++) {
+
+            // for M+1(maxChildren) entries, there are M-2m+2 distributions, m
+            // is minChildren
+            // 1<=k<=M-2m+2, the kth distribution is the 2 groups that, first
+            // group is the
+            // the first (m-1)+k entries, the second group is the remaining
+
+
+            // by lower bound and upper bound
+            for (int t = 0; t < 2; t++) {
+                if (t == 0) {
+                    Collections.sort(sortedList, HNTreeNode.mbrComparatorS(axis));
+                } else {
+                    Collections.sort(sortedList, HNTreeNode.mbrComparatorT(axis));
+                }
+                for (int k = 1; k <= maxChildren - 2 * minChildren + 2; k++) {
+                    // one distribution starts here
+                    double currMargin = 0;
+                    double currOverlap = 0;
+                    double currVolumn = 0;
+                    MBR group1MBR = new MBR(numDim);
+                    MBR group2MBR = new MBR(numDim);
+                    for (int i = 0; i < sortedList.size(); i++) {
+                        if (i < minChildren - 1 + k) {
+                            group1MBR.updateMBR(sortedList.get(i));
+                        } else {
+                            group2MBR.updateMBR(sortedList.get(i));
+                        }
+                    }
+
+                    currMargin = group1MBR.margin() + group2MBR.margin();
+                    currOverlap = MBR.calcOverlap(group1MBR, group2MBR);
+                    currVolumn = group1MBR.volumn() + group2MBR.margin();
+                    if ((currMargin < minimumMargin) 
+                            || (currMargin == minimumMargin && currOverlap < minimumOverlap) 
+                            || (currMargin == minimumMargin && currOverlap == minimumOverlap && currVolumn < minimumVolumn)) {
+                        minimumMargin = currMargin;
+                        minimumOverlap = currOverlap;
+                        minimumVolumn = currVolumn;
+                        if (t == 0) {
+                            ret.put(KEY_SorT, VALUE_SorT_S);
+                        } else {
+                            ret.put(KEY_SorT, VALUE_SorT_T);
+                        }
+                        ret.put(KEY_axis, axis);
+                        ret.put(KEY_index, k);
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
     private List<HNTreeNode> buildNodes(List<List<HNTreeNode>> lists, HNTreeNode parent, boolean isLeaf) {
         List<HNTreeNode> nodes = new LinkedList<HNTreeNode>();
         for (List<HNTreeNode> list : lists) {
@@ -188,16 +248,25 @@ public class HNTree {
         return nodes;
     }
 
-    private List<List<HNTreeNode>> split2PartsAtDim(List<List<HNTreeNode>> partList, int i) {
+    private List<List<HNTreeNode>> split2Parts(List<List<HNTreeNode>> partList, Map<String, Integer> axisNidx) {
+        int SorT = axisNidx.get(KEY_SorT);
+        int axis = axisNidx.get(KEY_axis);
+        int index = axisNidx.get(KEY_index);
         List<List<HNTreeNode>> nextList = new LinkedList<List<HNTreeNode>>();
         for (List<HNTreeNode> part : partList) {
-            int size2 = part.size() / 2;
-            int size1 = part.size() - size2;
-            if (size1 == 0 || size2 == 0) {
-                System.err.println("error!not enough nodes to split!");
+
+            int size1 = minChildren - 1 + index;
+            int size2 = part.size() - size1;
+            if (size1 < minChildren || size2 < minChildren) {
+                System.err.println("error number of nodes to split!");
             }
             // System.out.println(size1 + "__" + size2);
-            Collections.sort(part, HNTreeNode.mbrComparator(i));
+            if (SorT == 0) {
+                Collections.sort(part, HNTreeNode.mbrComparatorS(axis));
+            } else {
+                Collections.sort(part, HNTreeNode.mbrComparatorT(axis));
+            }
+
             List<HNTreeNode> list1 = new LinkedList<HNTreeNode>();
             List<HNTreeNode> list2 = new LinkedList<HNTreeNode>();
             int j = 0;
@@ -213,7 +282,7 @@ public class HNTree {
         return nextList;
     }
 
-    private HNTreeNode chooseLeaf(HNTreeNode target, float[] point) {
+    private HNTreeNode chooseSubTree(HNTreeNode target, float[] point) {
         if (target.isLeaf()) {
             return target;
         } else {
@@ -253,7 +322,7 @@ public class HNTree {
                     } 
                 }
 
-                return chooseLeaf(nextTarget, point);
+                return chooseSubTree(nextTarget, point);
 
             } else {
                 // least area enlarge=> smallest area
@@ -279,7 +348,7 @@ public class HNTree {
                     }
                 }
 
-                return chooseLeaf(nextTarget, point);
+                return chooseSubTree(nextTarget, point);
             }
         }
     }

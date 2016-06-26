@@ -19,7 +19,22 @@ public class MBR {
         s += "],\t";
         return s;
     }
-	public MBR(float[] s, float[] t){
+
+    public MBR(int numDim) {
+        // float[] emptyS = { Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY
+        // };
+        // float[] emptyT = { Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY
+        // };
+        // this(emptyS, emptyT);
+        _mbrS = new float[numDim];
+        _mbrT = new float[numDim];
+        for (int i = 0; i < numDim; i++) {
+            _mbrS[i] = Float.POSITIVE_INFINITY;
+            _mbrT[i] = Float.NEGATIVE_INFINITY;
+        }
+    }
+
+    public MBR(float[] s, float[] t) {
 		int numDim = s.length;
 		_mbrS = new float[numDim];
 		_mbrT = new float[numDim];
@@ -68,6 +83,13 @@ public class MBR {
             this.updateMBR(pt1);
             this.updateMBR(pt2);
         }
+    }
+
+    public void updateMBR(HNTreeNode n) {
+        float[] pt1 = n.MBR_S();
+        float[] pt2 = n.MBR_T();
+        this.updateMBR(pt1);
+        this.updateMBR(pt2);
     }
 
     public boolean updateMBR(float[] point) {
@@ -136,6 +158,14 @@ public class MBR {
             return mbr;
         }
 
+    }
+
+    public double margin() {
+        double m_sum = 0;
+        for (int i = 0; i < _mbrS.length; i++) {
+            m_sum += _mbrT[i] - _mbrS[i];
+        }
+        return m_sum;
     }
 
 }

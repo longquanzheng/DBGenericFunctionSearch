@@ -7,8 +7,6 @@ import java.util.Random;
 import java.util.Stack;
 
 import gensearch.MinMaxDist;
-import gensearch.Range;
-import gensearch.RangeExpression;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import qlong.hntree.HNTree;
@@ -50,14 +48,19 @@ public class KSmallestSearchForHNtree {
 
         // 1. Input data
         int numDim = 6;
-        int minCh = 1;
-        int maxCh = 255;
+        int minCh = 8;
+        int maxCh = 32;
         int entryNum = 5000000;
 
-        String[] fs = { "((x1-x2)^2+(x3-x4)^2)^(1/2)/(x5-x6)",
+        String[] fs = { 
+                "((x1-x2)^2+(x3-x4)^2)^(1/2)/(x5-x6)",
 
-                "(x1-x2)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )", "(x2-x1)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )", "(x3-x4)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )", "(x4-x3)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
-                "-((x1-x2)^2+(x3-x4)^2)^(1/2) / (x5-x6)^2", "((x1-x2)^2+(x3-x4)^2)^(1/2) / (x5-x6)^2", };
+                "(x1-x2)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )", 
+                "(x2-x1)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )", 
+                "(x3-x4)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )", 
+                "(x4-x3)/( (x5-x6)*((x1-x2)^2+(x3-x4)^2)^(1/2) )",
+                "-((x1-x2)^2+(x3-x4)^2)^(1/2) / (x5-x6)^2", 
+                "((x1-x2)^2+(x3-x4)^2)^(1/2) / (x5-x6)^2", };
 
         Expression udf = new ExpressionBuilder(fs[0]).variables("x1", "x2", "x3", "x4", "x5", "x6").build();
         Expression[] dudfs = new Expression[numDim];
@@ -79,11 +82,6 @@ public class KSmallestSearchForHNtree {
 
             for (int j = 0; j < numDim; j++) {
                 pt[j] = rand.nextFloat() * 100;
-                // if(pt[4]>pt[5]){
-                // float tmp = pt[4];
-                // pt[4] = pt[5];
-                // pt[5] = tmp;
-                // }
             }
 
             for (int j = 0; j < numDim; j++) {
@@ -213,22 +211,11 @@ public class KSmallestSearchForHNtree {
                 // 1.0 check range first, using vertexes only when all dudfs are
                 // consistent
             visit_cnt++;
-            int i = 0;
-            int numDimensions = dudfs.length;
-            for (; i < dudfs.length; i++) {
-                RangeExpression rexp = new RangeExpression(dudfs[i]);
-                // set ranges of vars
-                for (int varIdx = 0; varIdx < numDimensions; varIdx++) {
-                    rexp.setVariable("x" + (varIdx + 1), new Range(node.DMBR_S()[varIdx], node.DMBR_T()[varIdx]));
-                }
-                Range r = rexp.evaluate();
-                if (r.hasChangedSign()) {
-                    break;
-                }
-            }
+            
+            boolean isConsistent = MinMaxDistHN.isConsistent(dudfs,node);
 
             // 2.0
-            if (i < dudfs.length) {// not all vars are consistent, then use the
+            if (!isConsistent) {// not all vars are consistent, then use the
                                    // sub-Nodes
                 // 2.1 get min and minmax of all sub-Nodes
                 uncons_cnt++;

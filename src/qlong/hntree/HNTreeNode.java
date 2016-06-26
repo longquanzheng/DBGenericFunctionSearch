@@ -85,7 +85,7 @@ public class HNTreeNode {
         }
     }
 
-    public static Comparator<HNTreeNode> mbrComparator(int i) {
+    public static Comparator<HNTreeNode> mbrComparatorS(int i) {
         return new Comparator<HNTreeNode>() {
             @Override
             public int compare(HNTreeNode n1, HNTreeNode n2) {
@@ -96,6 +96,25 @@ public class HNTreeNode {
                 } else {
                     pt1 = n1.getMBR().getS();
                     pt2 = n2.getMBR().getS();
+                }
+                float f = pt1[i] - pt2[i];
+                int ret = f < 0 ? -1 : (f > 0 ? 1 : 0);
+                return ret;
+            }
+        };
+    }
+
+    public static Comparator<HNTreeNode> mbrComparatorT(int i) {
+        return new Comparator<HNTreeNode>() {
+            @Override
+            public int compare(HNTreeNode n1, HNTreeNode n2) {
+                float[] pt1, pt2;
+                if (n1.isEntry()) {
+                    pt1 = n1.getVal();
+                    pt2 = n2.getVal();
+                } else {
+                    pt1 = n1.getMBR().getT();
+                    pt2 = n2.getMBR().getT();
                 }
                 float f = pt1[i] - pt2[i];
                 int ret = f < 0 ? -1 : (f > 0 ? 1 : 0);

@@ -49,16 +49,7 @@ public class KSmallestSearchForNBRtree {
 *		 ... 
 	 * @param args
 	 */
-	
-	public static void main7(String[] args) {
-		//try bad case
-		String[] fs={
-				"1/(x1-x2)^2",
-				"-2/(x1-x2)^3",
-				"2/(x1-x2)^3",
-				};
-		 test(2,10,32,fs,1,100000,5);
-	}
+
 	
 	public static void main(String[] args) {
 		//the speed of 2 dim
@@ -74,49 +65,7 @@ public class KSmallestSearchForNBRtree {
 		 test(6,4,10,fs,100,500,1);
 	}
 	
-	public static void main1(String[] args) {
-		//speed of 1 dim
-		String[] fs={
-				"(x1-x2)/(x3-x4)",
-				"1/(x3-x4)",
-				"-1/(x3-x4)",
-				"-(x1-x2)/(x3-x4)^2",
-				"(x1-x2)/(x3-x4)^2"
-				};
-		 test(4,10,32,fs,1000,100000,1);
-	}
-	
-	public static void main4(String[] args) {
-		//sum of 2 distances
-		String[] fs={
-				"((x1-1)^2+(x2-2)^2)^(1/2)+((x1-3)^2+(x2-4)^2)^(1/2)",
-				"(x1-1)/((x1-1)^2+(x2-2)^2)^(1/2)+(x1-3)/((x1-3)^2+(x2-4)^2)^(1/2)",
-				"(x2-2)/((x1-1)^2+(x2-2)^2)^(1/2)+(x2-4)/((x1-3)^2+(x2-4)^2)^(1/2)",
-				};
-		 test(2,10,32,fs,100,100000,1);
-	}
-	
-	public static void main2(String[] args) {
-		//another sum of 2 distances
-		String[] fs={
-				"((x1-100)^2+(x2-200)^2)^(1/2)+((x1-1000)^2+(x2-2000)^2)^(1/2)",
-				"(x1-100)/((x1-100)^2+(x2-200)^2)^(1/2)+(x1-1000)/((x1-1000)^2+(x2-2000)^2)^(1/2)",
-				"(x2-200)/((x1-100)^2+(x2-200)^2)^(1/2)+(x2-2000)/((x1-1000)^2+(x2-2000)^2)^(1/2)",
-				};
-		 test(2,10,32,fs,500,100000,1);
-	}
-	
-	public static void main3(String[] args) {
-		//multiple function
-		String[] fs={
-				"x1*x2*x3",
-				"x2*x3",
-				"x1*x3",
-				"x1*x2",
-				};
-		 test(3,32,64,fs,100000,100000,1);
 
-    }
 	
 	
 	public static void test(int numDim,int minNum,int maxNum,String[] fs, double valRange,int cnt, double diffRate ) {

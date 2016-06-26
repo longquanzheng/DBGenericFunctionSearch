@@ -13,8 +13,8 @@ public class Constants {
     public static final String NODE_FILE_SUFFIX = ".node";
 
     public static int PAGESIZE = 8*1024;
-    public static int MAX_CHILDREN = 10;
-    public static int MIN_CHILDREN = 4;
+    public static int MAX_CHILDREN = 65;
+    public static int MIN_CHILDREN = 1;
     public static int DIMENSION = 2;
 }
 

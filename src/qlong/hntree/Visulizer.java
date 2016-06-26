@@ -64,15 +64,16 @@ public class Visulizer extends JComponent {
     }
 
     public static void main(String[] args) {
-        start();
+        start(1000);
     }
 
     public static Visulizer comp;
-    public static void start() {
+
+    public static void start(int size) {
         JFrame testFrame = new JFrame();
         testFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         comp = new Visulizer();
-        comp.setPreferredSize(new Dimension(500, 500));
+        comp.setPreferredSize(new Dimension(size, size));
         testFrame.getContentPane().add(comp, BorderLayout.CENTER);
         JPanel buttonsPanel = new JPanel();
         JButton newLineButton = new JButton("New Line");

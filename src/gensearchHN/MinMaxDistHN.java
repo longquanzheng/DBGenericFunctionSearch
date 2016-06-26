@@ -3,6 +3,8 @@ package gensearchHN;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import gensearch.Range;
+import gensearch.RangeExpression;
 import gensearch.Vertex;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
@@ -111,6 +113,26 @@ public class MinMaxDistHN {
 		}
 	}
 
+    public static boolean isConsistent(Expression[] dudfs, HNTreeNode node) {
+        int i = 0;
+        int numDimensions = dudfs.length;
+        for (; i < dudfs.length; i++) {
+            RangeExpression rexp = new RangeExpression(dudfs[i]);
+            // set ranges of vars
+            for (int varIdx = 0; varIdx < numDimensions; varIdx++) {
+                rexp.setVariable("x" + (varIdx + 1), new Range(node.DMBR_S()[varIdx], node.DMBR_T()[varIdx]));
+            }
+            Range r = rexp.evaluate();
+            if (r.hasChangedSign()) {
+                break;
+            }
+        }
+        if (i < dudfs.length) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 	
 }
 

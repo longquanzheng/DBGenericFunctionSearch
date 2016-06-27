@@ -113,14 +113,14 @@ public class MinMaxDistHN {
 		}
 	}
 
-    public static boolean isConsistent(Expression[] dudfs, HNTreeNode node) {
+    public static boolean isConsistent(Expression[] dudfs, double[] mbrS, double[] mbrT) {
         int i = 0;
         int numDimensions = dudfs.length;
         for (; i < dudfs.length; i++) {
             RangeExpression rexp = new RangeExpression(dudfs[i]);
             // set ranges of vars
             for (int varIdx = 0; varIdx < numDimensions; varIdx++) {
-                rexp.setVariable("x" + (varIdx + 1), new Range(node.DMBR_S()[varIdx], node.DMBR_T()[varIdx]));
+                rexp.setVariable("x" + (varIdx + 1), new Range(mbrS[varIdx], mbrT[varIdx]));
             }
             Range r = rexp.evaluate();
             if (r.hasChangedSign()) {

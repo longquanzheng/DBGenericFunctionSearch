@@ -52,8 +52,23 @@ public class MBR {
         return _mbrS;
     }
 
+    public double[] DS() {
+        double[] res = new double[_mbrS.length];
+        for (int i = 0; i < _mbrS.length; i++) {
+            res[i] = _mbrS[i];
+        }
+        return res;
+    }
     public float[] getT() {
         return _mbrT;
+    }
+
+    public double[] DT() {
+        double[] res = new double[_mbrS.length];
+        for (int i = 0; i < _mbrS.length; i++) {
+            res[i] = _mbrT[i];
+        }
+        return res;
     }
 
     public static MBR tryAddPoint(MBR currMBR, float[] point) {

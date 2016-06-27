@@ -8,6 +8,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import gensearchHN.MinMaxDistHN;
+import net.objecthunter.exp4j.Expression;
+
 public class HNTree {
 
     private static final String KEY_SorT = "MBRS_OR_MBRT";
@@ -26,6 +29,9 @@ public class HNTree {
     private static Color[] colors = { Color.RED, Color.BLACK, Color.BLUE, Color.CYAN, Color.ORANGE, Color.PINK, Color.GREEN, };
 
     private int baseRange = 0;
+
+    private Expression[] dudfs = null;
+
     public static void main(String[] args) {
         HNTree t = new HNTree(2, 8, 32);
         t.baseRange = 500;
@@ -110,16 +116,19 @@ public class HNTree {
     }
 
     public HNTree(int numDim, int minChildren, int maxChildren) {
-        // if (maxChildren < Math.pow(2, numDim)) {
-        // throw new IllegalArgumentException("too small maxChildren");
-        // }
-        // if (minChildren > (int) (maxChildren / Math.pow(2, numDim))) {
-        // throw new IllegalArgumentException("too big minChildren");
-        // }
+        if (minChildren > (maxChildren / 2)) {
+            throw new IllegalArgumentException("too big minChildren");
+        }
         this.numDim = numDim;
         this.minChildren = minChildren;
         this.maxChildren = maxChildren;
         root = null;
+    }
+
+
+    public HNTree(int numDim2, int minCh, int maxCh, Expression[] dudfs) {
+        this(numDim2, minCh, maxCh);
+        this.dudfs = dudfs;
     }
 
     public void insert(float[] point) {
@@ -138,7 +147,7 @@ public class HNTree {
 
     private void treatOverflow(HNTreeNode node) {
         List<List<HNTreeNode>> split = new LinkedList<List<HNTreeNode>>();
-        // FIXME we may support split to more than 2 in the future
+        // TODO we may support split to more than 2 in the future
         split.add(node.children);
 
         Map<String, Integer> axisNidx = chooseAxisNIndex(split);
@@ -174,11 +183,14 @@ public class HNTree {
         List<HNTreeNode> sortedList = split.get(0);
         if (sortedList.size() != maxChildren + 1) {
             System.err.println("NO!!");
+            throw new RuntimeException("error!");
         }
 
         double minimumMargin = Double.POSITIVE_INFINITY;
         double minimumOverlap = Double.POSITIVE_INFINITY;
         double minimumVolumn = Double.POSITIVE_INFINITY;
+        int maxConsistentSize = Integer.MIN_VALUE;
+
         Map<String, Integer> ret = new HashMap<String,Integer>();
         for (int axis = 0; axis < numDim; axis++) {
 
@@ -201,6 +213,8 @@ public class HNTree {
                     double currMargin = 0;
                     double currOverlap = 0;
                     double currVolumn = 0;
+                    int currConsistentSize = 0;
+
                     MBR group1MBR = new MBR(numDim);
                     MBR group2MBR = new MBR(numDim);
                     for (int i = 0; i < sortedList.size(); i++) {
@@ -211,15 +225,28 @@ public class HNTree {
                         }
                     }
 
+                    if (dudfs != null) {
+                        if (MinMaxDistHN.isConsistent(dudfs, group1MBR.DS(), group1MBR.DT())) {
+                            currConsistentSize += minChildren - 1 + k;
+                        }
+
+                        if (MinMaxDistHN.isConsistent(dudfs, group2MBR.DS(), group2MBR.DT())) {
+                            currConsistentSize += sortedList.size() - (minChildren - 1 + k);
+                        }
+                    }
+
                     currMargin = group1MBR.margin() + group2MBR.margin();
                     currOverlap = MBR.calcOverlap(group1MBR, group2MBR);
                     currVolumn = group1MBR.volumn() + group2MBR.margin();
-                    if ((currMargin < minimumMargin) 
-                            || (currMargin == minimumMargin && currOverlap < minimumOverlap) 
-                            || (currMargin == minimumMargin && currOverlap == minimumOverlap && currVolumn < minimumVolumn)) {
+                    
+                    if ( (currConsistentSize>maxConsistentSize)
+                            ||(currConsistentSize==maxConsistentSize && currMargin < minimumMargin) 
+                            || (currConsistentSize==maxConsistentSize && currMargin == minimumMargin && currOverlap < minimumOverlap) 
+                            || (currConsistentSize==maxConsistentSize && currMargin == minimumMargin && currOverlap == minimumOverlap && currVolumn < minimumVolumn)) {
                         minimumMargin = currMargin;
                         minimumOverlap = currOverlap;
                         minimumVolumn = currVolumn;
+                        maxConsistentSize = currConsistentSize;
                         if (t == 0) {
                             ret.put(KEY_SorT, VALUE_SorT_S);
                         } else {
@@ -259,6 +286,7 @@ public class HNTree {
             int size2 = part.size() - size1;
             if (size1 < minChildren || size2 < minChildren) {
                 System.err.println("error number of nodes to split!");
+                throw new RuntimeException("error!");
             }
             // System.out.println(size1 + "__" + size2);
             if (SorT == 0) {
@@ -291,6 +319,7 @@ public class HNTree {
                 double minOverlapEnlarge = Double.POSITIVE_INFINITY;
                 double minVolumnIncrease = Double.POSITIVE_INFINITY;
                 double minVolumn = Double.POSITIVE_INFINITY;
+                int minConsistent = Integer.MAX_VALUE;
 
                 HNTreeNode nextTarget = null;
                 for (HNTreeNode n : target.children) {
@@ -300,6 +329,28 @@ public class HNTree {
                     double overlapEnlarge = 0;
                     double volumnIncrease = 0;
                     double currVolumn = currMBR.volumn();
+                    int currConsistent = 0;
+
+                    if (dudfs != null) {
+                        boolean currMBRcon = MinMaxDistHN.isConsistent(dudfs, currMBR.DS(), currMBR.DT());
+                        boolean deltaMBRcon = false;
+                        if (deltaMBR != null) {
+                            deltaMBRcon = MinMaxDistHN.isConsistent(dudfs, deltaMBR.DS(), deltaMBR.DT());
+                        } else {
+                            deltaMBRcon = currMBRcon;
+                        }
+
+                        if (currMBRcon && !deltaMBRcon) {
+                            currConsistent = 3;
+                        } else if (!currMBRcon && !deltaMBRcon) {
+                            currConsistent = 1;
+                        } else if (currMBRcon && deltaMBRcon) {
+                            currConsistent = 2;
+                        } else {
+                            System.err.println("error delta MBR!");
+                            throw new RuntimeException("error!");
+                        }
+                    }
 
                     if (deltaMBR != null) {// if the MBR change after adding the
                         volumnIncrease = deltaMBR.volumn() - currMBR.volumn();
@@ -312,13 +363,15 @@ public class HNTree {
                             }
                         }
                     }
-                    if (overlapEnlarge < minOverlapEnlarge 
-                        || (overlapEnlarge == minOverlapEnlarge && volumnIncrease < minVolumnIncrease)
-                        ||(overlapEnlarge == minOverlapEnlarge && volumnIncrease == minVolumnIncrease && currVolumn < minVolumn)) {
+                    if ( (currConsistent<minConsistent)
+                        || (currConsistent==minConsistent && overlapEnlarge < minOverlapEnlarge) 
+                        || (currConsistent==minConsistent && overlapEnlarge == minOverlapEnlarge && volumnIncrease < minVolumnIncrease)
+                        || (currConsistent==minConsistent && overlapEnlarge == minOverlapEnlarge && volumnIncrease == minVolumnIncrease && currVolumn < minVolumn)) {
                         minOverlapEnlarge = overlapEnlarge;
                         minVolumnIncrease = volumnIncrease;
                         minVolumn = currVolumn;
                         nextTarget = n;
+                        minConsistent = currConsistent;
                     } 
                 }
 

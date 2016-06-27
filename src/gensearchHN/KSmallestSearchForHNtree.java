@@ -50,7 +50,7 @@ public class KSmallestSearchForHNtree {
         int numDim = 6;
         int minCh = 8;
         int maxCh = 32;
-        int entryNum = 5000000;
+        int entryNum = 1370000;
 
         String[] fs = { 
                 "((x1-x2)^2+(x3-x4)^2)^(1/2)/(x5-x6)",
@@ -71,7 +71,7 @@ public class KSmallestSearchForHNtree {
         dudfs[4] = new ExpressionBuilder(fs[5]).variables("x1", "x2", "x3", "x4", "x5", "x6").build();
         dudfs[5] = new ExpressionBuilder(fs[6]).variables("x1", "x2", "x3", "x4", "x5", "x6").build();
 
-        HNTree rt = new HNTree(numDim, minCh, maxCh);
+        HNTree rt = new HNTree(numDim, minCh, maxCh, dudfs);
 
         double min = Double.MAX_VALUE;
         float[] pt = new float[numDim];
@@ -82,6 +82,11 @@ public class KSmallestSearchForHNtree {
 
             for (int j = 0; j < numDim; j++) {
                 pt[j] = rand.nextFloat() * 100;
+            }
+
+            if (pt[4] == pt[5]) {
+                System.err.println("interesting..." + pt[4]);
+                pt[5] += 1;
             }
 
             for (int j = 0; j < numDim; j++) {
@@ -119,6 +124,7 @@ public class KSmallestSearchForHNtree {
                 System.out.println(calcMin);
                 if (min != calcMin) {
                     System.err.println("not match!");
+                    throw new RuntimeException("not match");
                 }
                 System.out.println("cons_cnt" + cons_cnt);
                 System.out.println("uncons_cnt" + uncons_cnt);
@@ -212,7 +218,7 @@ public class KSmallestSearchForHNtree {
                 // consistent
             visit_cnt++;
             
-            boolean isConsistent = MinMaxDistHN.isConsistent(dudfs,node);
+            boolean isConsistent = MinMaxDistHN.isConsistent(dudfs, node.DMBR_S(), node.DMBR_T());
 
             // 2.0
             if (!isConsistent) {// not all vars are consistent, then use the

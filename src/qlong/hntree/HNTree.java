@@ -22,6 +22,8 @@ public class HNTree {
 
     private static final String KEY_index = "index";
 
+    private static final String KEY_MIN_CONSISTENT = "min_consistent";
+
     public final int numDim, minChildren, maxChildren;
 
     public HNTreeNode root;
@@ -146,13 +148,42 @@ public class HNTree {
     }
 
     private void treatOverflow(HNTreeNode node) {
-        List<List<HNTreeNode>> split = new LinkedList<List<HNTreeNode>>();
-        // TODO we may support split to more than 2 in the future
-        split.add(node.children);
+        List<List<HNTreeNode>> split;
 
-        Map<String, Integer> axisNidx = chooseAxisNIndex(split);
-        split = split2Parts(split, axisNidx);
+        Map<String, Integer> axisNidx = chooseAxisNIndex(node.children, false);
+        split = split2Parts(node.children, axisNidx);
 
+        boolean tryDeeperSplit = true;
+        if (tryDeeperSplit && axisNidx.get(KEY_MIN_CONSISTENT) == 0) {
+            boolean part1try = false, part0try = false;
+            Map<String, Integer> moreAxisNidx0 = null, moreAxisNidx1 = null;
+            if (split.get(1).size() > minChildren * 2) {
+                part1try = true;
+                moreAxisNidx1 = chooseAxisNIndex(split.get(1), true);
+            }
+            if (split.get(0).size() > minChildren * 2) {
+                part0try = true;
+                moreAxisNidx0 = chooseAxisNIndex(split.get(0), true);
+            }
+
+            List<List<HNTreeNode>> part0split = null, part1split = null;
+            if (part1try && moreAxisNidx1.get(KEY_MIN_CONSISTENT) > 0) {
+                part1split = split2Parts(split.get(1), moreAxisNidx1);
+                split.remove(1);
+            }
+            if (part0try && moreAxisNidx0.get(KEY_MIN_CONSISTENT) > 0) {
+                part0split = split2Parts(split.get(0), moreAxisNidx0);
+                split.remove(0);
+            }
+            if (part1try && moreAxisNidx1.get(KEY_MIN_CONSISTENT) > 0) {
+                // System.out.println("deeper works0");
+                split.addAll(part1split);
+            }
+            if (part0try && moreAxisNidx0.get(KEY_MIN_CONSISTENT) > 0) {
+                // System.out.println("deeper works1");
+                split.addAll(part0split);
+            }
+        }
 
         if (node == root) {
             List<HNTreeNode> newnodes = buildNodes(split, node, node.isLeaf());
@@ -179,9 +210,8 @@ public class HNTree {
     }
 
 
-    private Map<String, Integer> chooseAxisNIndex(List<List<HNTreeNode>> split) {
-        List<HNTreeNode> sortedList = split.get(0);
-        if (sortedList.size() != maxChildren + 1) {
+    private Map<String, Integer> chooseAxisNIndex(List<HNTreeNode> sortedList, boolean deeper) {
+        if (sortedList.size() < maxChildren + 1 && !deeper) {
             System.err.println("NO!!");
             throw new RuntimeException("error!");
         }
@@ -208,7 +238,15 @@ public class HNTree {
                 } else {
                     Collections.sort(sortedList, HNTreeNode.mbrComparatorT(axis));
                 }
-                for (int k = 1; k <= maxChildren - 2 * minChildren + 2; k++) {
+                int numDistribution =  0;
+                if(!deeper){
+                    // numDistribution = maxChildren - 2 * minChildren + 2;
+                    numDistribution = sortedList.size() - 2 * minChildren + 1;
+                }else{
+                    // should both use this formula
+                    numDistribution = sortedList.size() - 2 * minChildren + 1;
+                }
+                for (int k = 1; k <= numDistribution; k++) {
                     // one distribution starts here
                     double currMargin = 0;
                     double currOverlap = 0;
@@ -258,6 +296,7 @@ public class HNTree {
                 }
             }
         }
+        ret.put(KEY_MIN_CONSISTENT, maxConsistentSize);
         return ret;
     }
 
@@ -275,39 +314,39 @@ public class HNTree {
         return nodes;
     }
 
-    private List<List<HNTreeNode>> split2Parts(List<List<HNTreeNode>> partList, Map<String, Integer> axisNidx) {
+    private List<List<HNTreeNode>> split2Parts(List<HNTreeNode> whole, Map<String, Integer> axisNidx) {
         int SorT = axisNidx.get(KEY_SorT);
         int axis = axisNidx.get(KEY_axis);
         int index = axisNidx.get(KEY_index);
-        List<List<HNTreeNode>> nextList = new LinkedList<List<HNTreeNode>>();
-        for (List<HNTreeNode> part : partList) {
+        List<List<HNTreeNode>> parts = new LinkedList<List<HNTreeNode>>();
+        // for (List<HNTreeNode> part : partList) {
 
-            int size1 = minChildren - 1 + index;
-            int size2 = part.size() - size1;
-            if (size1 < minChildren || size2 < minChildren) {
-                System.err.println("error number of nodes to split!");
-                throw new RuntimeException("error!");
-            }
-            // System.out.println(size1 + "__" + size2);
-            if (SorT == 0) {
-                Collections.sort(part, HNTreeNode.mbrComparatorS(axis));
-            } else {
-                Collections.sort(part, HNTreeNode.mbrComparatorT(axis));
-            }
-
-            List<HNTreeNode> list1 = new LinkedList<HNTreeNode>();
-            List<HNTreeNode> list2 = new LinkedList<HNTreeNode>();
-            int j = 0;
-            for (; j < size1; j++) {
-                list1.add(part.get(j));
-            }
-            for (; j < size1 + size2; j++) {
-                list2.add(part.get(j));
-            }
-            nextList.add(list1);
-            nextList.add(list2);
+        int size1 = minChildren - 1 + index;
+        int size2 = whole.size() - size1;
+        if (size1 < minChildren || size2 < minChildren) {
+            System.err.println("error number of nodes to split!");
+            throw new RuntimeException("error!");
         }
-        return nextList;
+        // System.out.println(size1 + "__" + size2);
+        if (SorT == 0) {
+            Collections.sort(whole, HNTreeNode.mbrComparatorS(axis));
+        } else {
+            Collections.sort(whole, HNTreeNode.mbrComparatorT(axis));
+        }
+
+        List<HNTreeNode> list1 = new LinkedList<HNTreeNode>();
+        List<HNTreeNode> list2 = new LinkedList<HNTreeNode>();
+        int j = 0;
+        for (; j < size1; j++) {
+            list1.add(whole.get(j));
+        }
+        for (; j < size1 + size2; j++) {
+            list2.add(whole.get(j));
+        }
+        parts.add(list1);
+        parts.add(list2);
+        // }
+        return parts;
     }
 
     private HNTreeNode chooseSubTree(HNTreeNode target, float[] point) {

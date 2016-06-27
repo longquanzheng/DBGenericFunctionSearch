@@ -45,12 +45,25 @@ public class KSmallestSearchForHNtree {
      * @param args
      */
     public static void main(String[] args) {
+        System.out.println("================,minChildren=2");
+        test(2);
+        // System.out.println("================,minChildren=4");
+        // test(4);
+        // System.out.println("================,minChildren=8");
+        // test(8);
+        // System.out.println("================,minChildren=12");
+        // test(12);
+        // System.out.println("================,minChildren=16");
+        // test(16);
+    }
+
+    public static void test(int minCh) {
 
         // 1. Input data
         int numDim = 6;
-        int minCh = 8;
+        // int minCh = 8;
         int maxCh = 32;
-        int entryNum = 1370000;
+        int entryNum = 100_0000;
 
         String[] fs = { 
                 "((x1-x2)^2+(x3-x4)^2)^(1/2)/(x5-x6)",
@@ -98,7 +111,7 @@ public class KSmallestSearchForHNtree {
             if (val < min) {
                 min = val;
             }
-            if (i % 5000 == 0 && i > 0) {
+            if (i % 5_0000 == 0 && i > 0) {
                 System.out.println("insert ###################" + i + "$" + val + pt[0] + "," + pt[1]);
                 resetStatis();
                 // 2. searching the smallest one

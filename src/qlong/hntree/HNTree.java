@@ -343,9 +343,9 @@ public class HNTree {
                         if (currMBRcon && !deltaMBRcon) {
                             currConsistent = 3;
                         } else if (!currMBRcon && !deltaMBRcon) {
-                            currConsistent = 1;
-                        } else if (currMBRcon && deltaMBRcon) {
                             currConsistent = 2;
+                        } else if (currMBRcon && deltaMBRcon) {
+                            currConsistent = 1;
                         } else {
                             System.err.println("error delta MBR!");
                             throw new RuntimeException("error!");

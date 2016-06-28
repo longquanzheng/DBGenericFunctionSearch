@@ -22,7 +22,8 @@ public class HNTree {
 
     private static final String KEY_index = "index";
 
-    private static final String KEY_MIN_CONSISTENT = "min_consistent";
+    private static final String KEY_MIN_CONSISTENT_0 = "min_consistent_0";
+    private static final String KEY_MIN_CONSISTENT_1 = "min_consistent_1";
 
     public final int numDim, minChildren, maxChildren;
 
@@ -148,40 +149,42 @@ public class HNTree {
     }
 
     private void treatOverflow(HNTreeNode node) {
-        List<List<HNTreeNode>> split;
+        LinkedList<List<HNTreeNode>> split;
 
         Map<String, Integer> axisNidx = chooseAxisNIndex(node.children, false);
         split = split2Parts(node.children, axisNidx);
 
-        boolean tryDeeperSplit = true;
-        if (tryDeeperSplit && axisNidx.get(KEY_MIN_CONSISTENT) == 0) {
-            boolean part1try = false, part0try = false;
-            Map<String, Integer> moreAxisNidx0 = null, moreAxisNidx1 = null;
-            if (split.get(1).size() > minChildren * 2) {
-                part1try = true;
-                moreAxisNidx1 = chooseAxisNIndex(split.get(1), true);
+        boolean tryDeeperSplit = false;// = node.isLeaf();
+        // axisNidx.get(KEY_MIN_CONSISTENT) == 0)
+        if (tryDeeperSplit) {
+            int deeperSplit = 0;
+            if (axisNidx.get(KEY_MIN_CONSISTENT_0) == 0 && split.get(0).size() > minChildren * 2) {
+                deeperSplit++;
             }
-            if (split.get(0).size() > minChildren * 2) {
-                part0try = true;
-                moreAxisNidx0 = chooseAxisNIndex(split.get(0), true);
+            if (axisNidx.get(KEY_MIN_CONSISTENT_1) == 0 && split.get(1).size() > minChildren * 2) {
+                deeperSplit++;
             }
 
-            List<List<HNTreeNode>> part0split = null, part1split = null;
-            if (part1try && moreAxisNidx1.get(KEY_MIN_CONSISTENT) > 0) {
-                part1split = split2Parts(split.get(1), moreAxisNidx1);
-                split.remove(1);
-            }
-            if (part0try && moreAxisNidx0.get(KEY_MIN_CONSISTENT) > 0) {
-                part0split = split2Parts(split.get(0), moreAxisNidx0);
+            Map<String, Integer> moreAxisNidx = null;
+            while (deeperSplit > 0) {
+                deeperSplit--;
+                moreAxisNidx = chooseAxisNIndex(split.get(0), true);
+                List<List<HNTreeNode>> moreSplit = split2Parts(split.get(0), moreAxisNidx);
                 split.remove(0);
-            }
-            if (part1try && moreAxisNidx1.get(KEY_MIN_CONSISTENT) > 0) {
-                // System.out.println("deeper works0");
-                split.addAll(part1split);
-            }
-            if (part0try && moreAxisNidx0.get(KEY_MIN_CONSISTENT) > 0) {
-                // System.out.println("deeper works1");
-                split.addAll(part0split);
+
+                if (moreAxisNidx.get(KEY_MIN_CONSISTENT_0) == 0 && moreSplit.get(0).size() > minChildren * 2) {
+                    deeperSplit++;
+                    split.addFirst(moreSplit.get(0));
+                } else {
+                    split.addLast(moreSplit.get(0));
+                }
+                if (moreAxisNidx.get(KEY_MIN_CONSISTENT_1) == 0 && moreSplit.get(1).size() > minChildren * 2) {
+                    deeperSplit++;
+                    split.addFirst(moreSplit.get(1));
+                } else {
+                    split.addLast(moreSplit.get(1));
+                }
+
             }
         }
 
@@ -220,6 +223,8 @@ public class HNTree {
         double minimumOverlap = Double.POSITIVE_INFINITY;
         double minimumVolumn = Double.POSITIVE_INFINITY;
         int maxConsistentSize = Integer.MIN_VALUE;
+        int minPart0Consistent = 1;
+        int minPart1Consistent = 1;
 
         Map<String, Integer> ret = new HashMap<String,Integer>();
         for (int axis = 0; axis < numDim; axis++) {
@@ -252,6 +257,8 @@ public class HNTree {
                     double currOverlap = 0;
                     double currVolumn = 0;
                     int currConsistentSize = 0;
+                    int currPart0Consistent = 1;
+                    int currPart1Consistent = 1;
 
                     MBR group1MBR = new MBR(numDim);
                     MBR group2MBR = new MBR(numDim);
@@ -266,10 +273,14 @@ public class HNTree {
                     if (dudfs != null) {
                         if (MinMaxDistHN.isConsistent(dudfs, group1MBR.DS(), group1MBR.DT())) {
                             currConsistentSize += minChildren - 1 + k;
+                        } else {
+                            currPart0Consistent = 0;
                         }
 
                         if (MinMaxDistHN.isConsistent(dudfs, group2MBR.DS(), group2MBR.DT())) {
                             currConsistentSize += sortedList.size() - (minChildren - 1 + k);
+                        } else {
+                            currPart1Consistent = 0;
                         }
                     }
 
@@ -285,6 +296,8 @@ public class HNTree {
                         minimumOverlap = currOverlap;
                         minimumVolumn = currVolumn;
                         maxConsistentSize = currConsistentSize;
+                        minPart0Consistent = currPart0Consistent;
+                        minPart1Consistent = currPart1Consistent;
                         if (t == 0) {
                             ret.put(KEY_SorT, VALUE_SorT_S);
                         } else {
@@ -296,7 +309,8 @@ public class HNTree {
                 }
             }
         }
-        ret.put(KEY_MIN_CONSISTENT, maxConsistentSize);
+        ret.put(KEY_MIN_CONSISTENT_0, minPart0Consistent);
+        ret.put(KEY_MIN_CONSISTENT_1, minPart1Consistent);
         return ret;
     }
 
@@ -314,11 +328,11 @@ public class HNTree {
         return nodes;
     }
 
-    private List<List<HNTreeNode>> split2Parts(List<HNTreeNode> whole, Map<String, Integer> axisNidx) {
+    private LinkedList<List<HNTreeNode>> split2Parts(List<HNTreeNode> whole, Map<String, Integer> axisNidx) {
         int SorT = axisNidx.get(KEY_SorT);
         int axis = axisNidx.get(KEY_axis);
         int index = axisNidx.get(KEY_index);
-        List<List<HNTreeNode>> parts = new LinkedList<List<HNTreeNode>>();
+        LinkedList<List<HNTreeNode>> parts = new LinkedList<List<HNTreeNode>>();
         // for (List<HNTreeNode> part : partList) {
 
         int size1 = minChildren - 1 + index;
@@ -343,8 +357,18 @@ public class HNTree {
         for (; j < size1 + size2; j++) {
             list2.add(whole.get(j));
         }
-        parts.add(list1);
-        parts.add(list2);
+
+        int minPart0Consistent = axisNidx.get(KEY_MIN_CONSISTENT_0);
+        int minPart1Consistent = axisNidx.get(KEY_MIN_CONSISTENT_1);
+        if (minPart0Consistent < minPart1Consistent || (minPart0Consistent == minPart1Consistent && list1.size() > list2.size())) {
+            parts.add(list1);
+            parts.add(list2);
+        } else {
+            parts.add(list2);
+            parts.add(list1);
+            axisNidx.put(KEY_MIN_CONSISTENT_0, minPart1Consistent);
+            axisNidx.put(KEY_MIN_CONSISTENT_1, minPart0Consistent);
+        }
         // }
         return parts;
     }

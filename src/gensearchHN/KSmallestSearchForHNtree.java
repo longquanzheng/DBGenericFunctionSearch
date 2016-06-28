@@ -45,8 +45,8 @@ public class KSmallestSearchForHNtree {
      * @param args
      */
     public static void main(String[] args) {
-        System.out.println("================,minChildren=2");
-        test(2);
+        System.out.println("================,minChildren=6");
+        test(6);
         // System.out.println("================,minChildren=4");
         // test(4);
         // System.out.println("================,minChildren=8");
